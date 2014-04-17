@@ -5,13 +5,6 @@ from abc import abstractmethod, abstractproperty
 class Solution(object):
     __metaclass__ = ABCMeta
 
-    def __init__(self, chromosome=None):
-        """
-        Optional decoding from chromosome during initialization
-        """
-        if chromosome:
-            self.decode(chromosome)
-
     @abstractmethod
     def encode(self):
         """
