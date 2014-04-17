@@ -59,11 +59,13 @@ class ArithExpSolution(Solution):
     @property
     def fitness(self):
         diff = abs(self._target - self._evaluate())
-        return 1.0 / (1.0 + diff)
+        errors = self._layout_errors()
+        return 1.0 / (1.0 + diff + errors)
+        # fitness = 1.0 / (1.0 + diff)
+        # return (fitness + self._layout_errors()) / 2.0
 
     def initialize_chromosome(self):
-        char_length = ArithExpSolution._char_length
-        return BinaryChromosome(length=self._length * char_length)
+        return BinaryChromosome(length=self._length * self._char_length)
 
     def _evaluate(self):
         """
@@ -105,6 +107,33 @@ class ArithExpSolution(Solution):
                 digit_next, operator_next = True, False
 
         return result
+
+    def _layout_errors(self):
+        """
+        Checks how many characters are not in 'their' places
+        Question marks and subsequent chars of same type decrease the score
+        For example, "1+2*3/4" would give a high score,
+        while "?23+-1?" would yield a low one.
+        Returns number between 0 and length of expression.
+        Lower score is better
+        """
+        score = 0
+        digit_next, operator_next = True, False
+        for char in self.expression:
+            if digit_next and char in self._digits:
+                score += 1
+                # digit_next, operator_next = operator_next, digit_next
+                digit_next, operator_next = False, True
+            elif operator_next and char in self._operators:
+                score += 1
+                # digit_next, operator_next = operator_next, digit_next
+                digit_next, operator_next = True, False
+
+        # Expression did not end up with a digit?
+        if digit_next and not operator_next:
+            score -= 1
+
+        return len(self.expression) - score
 
 
 class ArithExpSolutionFactory(SolutionFactory):

@@ -54,3 +54,29 @@ class ArithExpSolutionTests(unittest.TestCase):
         solution2.expression = "22+?-72"
         self.assertEqual(solution1._evaluate(), 22)
         self.assertEqual(solution2._evaluate(), 9)
+
+    def test_layout_errors(self):
+        """
+        Arithmetic expression solution - layout errors
+        """
+        solution1 = ArithExpSolution(target=None, length=None)
+        solution2 = ArithExpSolution(target=None, length=None)
+        solution3 = ArithExpSolution(target=None, length=None)
+        solution1.expression = "1+2*3/4"
+        solution2.expression = "?8+9-?"
+        solution3.expression = "?8+9-1"
+        self.assertEquals(solution1._layout_errors(), 0)
+        # if expression does not end with a digit
+        # then the previous operator should be treated as an error
+        self.assertEquals(solution2._layout_errors(), 3)
+        self.assertEquals(solution3._layout_errors(), 1)
+
+    def test_same_evalution_different_layouts(self):
+        """
+        Arithmetic expression solutions - same evaluation with different layouts
+        """
+        solution1 = ArithExpSolution(target=10, length=5)
+        solution2 = ArithExpSolution(target=10, length=5)
+        solution1.expression = "1+2*3"  # evaluates to 9
+        solution2.expression = "3*3?9"  # evaluates to 9 too
+        self.assertGreater(solution1.fitness, solution2.fitness)
