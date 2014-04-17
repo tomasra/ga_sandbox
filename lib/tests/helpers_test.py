@@ -12,12 +12,18 @@ class HelpersTests(unittest.TestCase):
         self.assertEqual(Helpers.bin_to_int("i like turtles"), None)
 
     def test_char_index_to_bin(self):
+        """
+        Helpers - character index to binary
+        """
         coding = "abcd"
         self.assertEqual(Helpers.char_index_to_bin(coding, "c"), "10")
         self.assertEqual(Helpers.char_index_to_bin(coding, "c", 4), "0010")
         self.assertEqual(Helpers.char_index_to_bin(coding, "E"), None)
 
     def test_char_index_to_bin_with_list(self):
+        """
+        Helpers - character index to binary with list
+        """
         coding = "abcd$"
         # index of $ in binary
         self.assertEqual(
@@ -25,6 +31,9 @@ class HelpersTests(unittest.TestCase):
         self.assertEqual(Helpers.char_index_to_bin(coding, "ef"), None)
 
     def test_enumerate_chunks_with_string(self):
+        """
+        Helpers - enumerate string chunks
+        """
         actual1 = [chunk for chunk in Helpers.enumerate_chunks("abcd", 2)]
         actual2 = [chunk for chunk in Helpers.enumerate_chunks("abcde", 2)]
         actual3 = [chunk for chunk in Helpers.enumerate_chunks("abc")]
@@ -33,6 +42,9 @@ class HelpersTests(unittest.TestCase):
         self.assertSequenceEqual(actual3, ["a", "b", "c"])
 
     def test_flip_bit(self):
+        """
+        Helpers - flip bit of binary string
+        """
         self.assertEqual(Helpers.flip_bit('0'), '1')
         self.assertEqual(Helpers.flip_bit(0), '1')
         self.assertEqual(Helpers.flip_bit('1'), '0')
@@ -40,6 +52,9 @@ class HelpersTests(unittest.TestCase):
         self.assertEqual(Helpers.flip_bit('$'), None)
 
     def test_random_bit_string(self):
+        """
+        Helpers - generate random bit string
+        """
         rand_seq = Helpers.random_bit_string(64)
         self.assertEqual(len(rand_seq), 64)
         # omg how do i test this???
