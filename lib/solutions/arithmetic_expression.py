@@ -1,17 +1,35 @@
+from lib.solution_factory import SolutionFactory
 from lib.chromosomes.binary import BinaryChromosome
 from lib.solution import Solution
 from lib.helpers import Helpers
 
 
 class ArithExpSolution(Solution):
-    target = 10
-    length = 7
-
     _na_char = '?'
     _digits = "0123456789"
     _operators = "+-*/"
     _coding = _digits + _operators + "??"
     _char_length = 4
+
+    def __init__(self, target, length):
+        self._target = target
+        self._length = length
+
+    @property
+    def target(self):
+        return self._target
+
+    @property
+    def length(self):
+        return self._length
+
+    @property
+    def expression(self):
+        return self._expression
+
+    @expression.setter
+    def expression(self, value):
+        self._expression = value
 
     def __repr__(self):
         return "Expression: {0}, value: {1}".format(
@@ -41,21 +59,12 @@ class ArithExpSolution(Solution):
 
     @property
     def fitness(self):
-        diff = abs(ArithExpSolution.target - self._evaluate())
+        diff = abs(self._target - self._evaluate())
         return 1.0 / (1.0 + diff)
 
     def initialize_chromosome(self):
-        length = ArithExpSolution.length
         char_length = ArithExpSolution._char_length
-        return BinaryChromosome(length=length * char_length)
-
-    @property
-    def expression(self):
-        return self._expression
-
-    @expression.setter
-    def expression(self, value):
-        self._expression = value
+        return BinaryChromosome(length=self._length * char_length)
 
     def _evaluate(self):
         """
@@ -97,3 +106,15 @@ class ArithExpSolution(Solution):
                 digit_next, operator_next = True, False
 
         return result
+
+
+class ArithExpSolutionFactory(SolutionFactory):
+    def __init__(self, target, length):
+        self._target = target
+        self._length = length
+
+    def create(self):
+        return ArithExpSolution(
+            target=self._target,
+            length=self._length
+        )
