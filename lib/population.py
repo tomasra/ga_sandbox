@@ -17,6 +17,18 @@ class Population(object):
             raise ValueError(
                 "Must supply either population size or initial chromosomes")
 
+        # Calculate and store various properties now
+        self._solutions = [
+            self._solution_class().decode(chromo)
+            for chromo in self._chromosomes
+        ]
+        self._best_solution = max(self.solutions, key=lambda s: s.fitness)
+        self._total_fitness = sum([
+            solution.fitness
+            for solution in self.solutions
+        ])
+        self._average_fitness = self.total_fitness / len(self)
+
     def __len__(self):
         return len(self._chromosomes)
 
@@ -32,24 +44,16 @@ class Population(object):
         """
         Decoded chromosome list - solutions.
         """
-        # for chromo in self._chromosomes:
-            # yield self._solution_class().decode(chromo)
-        return [
-            self._solution_class().decode(chromo)
-            for chromo in self._chromosomes
-        ]
+        return self._solutions
 
     @property
     def best_solution(self):
-        """
-        Solution with maximum fitness
-        """
-        return max(self.solutions, key=lambda s: s.fitness)
+        return self._best_solution
 
     @property
     def total_fitness(self):
-        return sum([solution.fitness for solution in self.solutions])
+        return self._total_fitness
 
     @property
     def average_fitness(self):
-        return self.total_fitness / len(self)
+        return self._average_fitness
