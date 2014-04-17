@@ -1,6 +1,5 @@
-from lib.solution_factory import SolutionFactory
 from lib.chromosomes.binary import BinaryChromosome
-from lib.solution import Solution
+from lib.solution import Solution, SolutionFactory
 from lib.helpers import Helpers
 
 

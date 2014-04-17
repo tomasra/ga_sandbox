@@ -3,7 +3,7 @@ from lib.chromosome import Chromosome
 from lib.algorithm import Algorithm
 from lib.crossover import Crossover
 from lib.selection import Selection
-from lib.solution import Solution
+from lib.solution import Solution, SolutionFactory
 
 
 class AlgorithmTests(unittest.TestCase):
@@ -16,7 +16,7 @@ class AlgorithmTests(unittest.TestCase):
         _FakeChromosome.mutation_count = 0
 
         alg = Algorithm(
-            _FakeSolution,
+            _FakeSolutionFactory(),
             crossover,
             selection,
             population_size=5
@@ -47,7 +47,7 @@ class AlgorithmTests(unittest.TestCase):
         _FakeChromosome.mutation_count = 0
 
         alg = Algorithm(
-            _FakeSolution,
+            _FakeSolutionFactory(),
             crossover,
             selection,
             population_size=5
@@ -99,6 +99,14 @@ class _FakeSolution(Solution):
 
     def initialize_chromosome(self):
         return _FakeChromosome(content="00000000")
+
+
+class _FakeSolutionFactory(SolutionFactory):
+    """
+    Fake solution factory
+    """
+    def create(self):
+        return _FakeSolution()
 
 
 class _FakeSelection(Selection):

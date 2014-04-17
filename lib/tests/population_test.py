@@ -1,5 +1,5 @@
 import unittest
-from lib.solution import Solution
+from lib.solution import Solution, SolutionFactory
 from lib.population import Population
 
 
@@ -9,7 +9,7 @@ class PopulationTest(unittest.TestCase):
         Population - create new with random chromosomes
         """
         population = Population(
-            _FakeSolution,
+            _FakeSolutionFactory(),
             population_size=2)
         self.assertEquals(len(population.chromosomes), 2)
         self.assertEquals(population.chromosomes[0], "01010101")
@@ -21,7 +21,7 @@ class PopulationTest(unittest.TestCase):
         """
         chromos = ["01010101", "10101010"]
         population = Population(
-            _FakeSolution,
+            _FakeSolutionFactory(),
             chromosomes=chromos)
         self.assertEquals(len(population.chromosomes), 2)
         self.assertEquals(population.chromosomes[0], "01010101")
@@ -33,7 +33,7 @@ class PopulationTest(unittest.TestCase):
         """
         chromos = ["01010101", "1000000"]
         population = Population(
-            _FakeSolution,
+            _FakeSolutionFactory(),
             chromosomes=chromos)
         self.assertEquals(len(population.solutions), 2)
         self.assertIsInstance(population.solutions[0], _FakeSolution)
@@ -47,7 +47,7 @@ class PopulationTest(unittest.TestCase):
         """
         chromos = ["0000", "0001", "0011"]
         population = Population(
-            _FakeSolution,
+            _FakeSolutionFactory(),
             chromosomes=chromos)
         self.assertEquals(population.best_solution.fitness, 2)
 
@@ -57,7 +57,7 @@ class PopulationTest(unittest.TestCase):
         """
         chromos = ["0001", "0011", "0111"]
         population = Population(
-            _FakeSolution,
+            _FakeSolutionFactory(),
             chromosomes=chromos)
         self.assertEquals(population.average_fitness, 2)
 
@@ -67,7 +67,7 @@ class PopulationTest(unittest.TestCase):
         """
         chromos = ["1111", "0111", "1110"]
         population = Population(
-            _FakeSolution,
+            _FakeSolutionFactory(),
             chromosomes=chromos)
         self.assertEquals(population.total_fitness, 10)
 
@@ -90,3 +90,8 @@ class _FakeSolution(Solution):
 
     def initialize_chromosome(self):
         return "01010101"
+
+
+class _FakeSolutionFactory(SolutionFactory):
+    def create(self):
+        return _FakeSolution()

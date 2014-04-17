@@ -1,4 +1,4 @@
-from lib.solution import Solution
+from lib.solution import Solution, SolutionFactory
 from lib.chromosomes.binary import BinaryChromosome
 
 
@@ -73,3 +73,10 @@ class RosenbrockSolution(Solution):
         scale_top = 2 ** RosenbrockSolution.VAR_LENGTH
         res = (value * (max_val - min_val)) / scale_top + min_val
         return res
+
+
+class RosenbrockSolutionFactory(SolutionFactory):
+    # TODO: fix this to pass MAX_* and other parameters
+    # to each solution object
+    def create(self):
+        return RosenbrockSolution()

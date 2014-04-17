@@ -32,3 +32,14 @@ class Solution(object):
         Creates new random chromosome instance of required length
         """
         pass
+
+
+class SolutionFactory(object):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def create(self):
+        """
+        Instantiates new object.
+        """
+        pass

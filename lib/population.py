@@ -1,16 +1,16 @@
 class Population(object):
     def __init__(self,
-                 solution_class,
+                 solution_factory,
                  population_size=None,
                  chromosomes=None):
-        self._solution_class = solution_class
+        self._solution_factory = solution_factory
         if chromosomes:
             self._chromosomes = chromosomes
         elif population_size:
             # Create random chromosomes
             self._population_size = population_size
             self._chromosomes = [
-                self._solution_class().initialize_chromosome()
+                self._solution_factory.create().initialize_chromosome()
                 for i in xrange(0, self._population_size)
             ]
         else:
@@ -19,7 +19,7 @@ class Population(object):
 
         # Calculate and store various properties now
         self._solutions = [
-            self._solution_class().decode(chromo)
+            self._solution_factory.create().decode(chromo)
             for chromo in self._chromosomes
         ]
         self._best_solution = max(self.solutions, key=lambda s: s.fitness)

@@ -3,13 +3,10 @@
 from lib.algorithm import Algorithm
 from lib.crossovers.one_point import OnePointCrossover
 from lib.selections.roulette_wheel import RouletteWheelSelection
-from lib.solutions.arithmetic_expression import ArithExpSolution
-
-ArithExpSolution.target = 30
-ArithExpSolution.length = 3
+from lib.solutions.arithmetic_expression import ArithExpSolutionFactory
 
 alg = Algorithm(
-    ArithExpSolution,
+    ArithExpSolutionFactory(target=30, length=3),
     OnePointCrossover(rate=0.4),
     RouletteWheelSelection(),
     population_size=50,

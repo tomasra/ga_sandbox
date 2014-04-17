@@ -3,12 +3,12 @@ from population import Population
 
 class Algorithm(object):
     def __init__(self,
-                 solution_class,
+                 solution_factory,
                  crossover_strategy,
                  selection_strategy,
                  population_size=10,
                  mutation_rate=0.01):
-        self._solution_class = solution_class
+        self._solution_factory = solution_factory
         self._crossover_strategy = crossover_strategy
         self._selection_strategy = selection_strategy
         self._population_size = population_size
@@ -25,7 +25,7 @@ class Algorithm(object):
         Creates new population with initial (random) chromosomes
         """
         self._population = Population(
-            self._solution_class,
+            self._solution_factory,
             self._population_size)
 
     def run(self, generations=1):
@@ -61,6 +61,6 @@ class Algorithm(object):
 
             # Replace current population
             self._population = Population(
-                self._solution_class,
+                self._solution_factory,
                 chromosomes=new_chromos
             )
