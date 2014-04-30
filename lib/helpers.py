@@ -19,7 +19,7 @@ class Helpers(object):
     @staticmethod
     def bin_to_int(binary):
         """
-        Converts binary to integer or returns none if binary is Invalid
+        Converts binary string to integer or returns none if binary is Invalid
         """
         try:
             return int(binary, 2)
