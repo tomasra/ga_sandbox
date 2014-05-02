@@ -25,15 +25,27 @@ def maximum(img):
 
 
 def vsobel(img):
-    return (img * f.vsobel(img)).astype(img.dtype)
+    # return (img * f.vsobel(img)).astype(img.dtype)
+    return np.multiply(
+        img,
+        f.vsobel(img)
+    ).astype(img.dtype)
 
 
 def hsobel(img):
-    return (img * f.hsobel(img)).astype(img.dtype)
+    # return (img * f.hsobel(img)).astype(img.dtype)
+    return np.multiply(
+        img,
+        f.hsobel(img)
+    ).astype(img.dtype)
 
 
 def sobel(img):
-    return (img * f.sobel(img)).astype(img.dtype)
+    # return (img * f.sobel(img)).astype(img.dtype)
+    return np.multiply(
+        img,
+        f.sobel(img)
+    ).astype(img.dtype)
 
 
 def lightedge(img):
@@ -66,10 +78,7 @@ def dilation(img):
 
 
 def inversion(img):
-    it = np.nditer([img, None])
-    for x, res in it:
-        res[...] = 255 - x
-    return it.operands[1]
+    return np.subtract(255, img)
 
 
 # Two-argument filters
@@ -79,10 +88,7 @@ def logical_sum(img1, img2):
     Maximum of two color planes
     """
     if img1.shape == img2.shape and img1.dtype == img2.dtype:
-        it = np.nditer([img1, img2, None])
-        for x1, x2, res in it:
-            res[...] = max([x1, x2])
-        return it.operands[2]
+        return np.maximum(img1, img2)
     else:
         raise ValueError("Image size or dtype mismatch")
 
@@ -92,10 +98,7 @@ def logical_product(img1, img2):
     Minimum of two color planes
     """
     if img1.shape == img2.shape and img1.dtype == img2.dtype:
-        it = np.nditer([img1, img2, None])
-        for x1, x2, res in it:
-            res[...] = min([x1, x2])
-        return it.operands[2]
+        return np.minimum(img1, img2)
     else:
         raise ValueError("Image size or dtype mismatch")
 
@@ -105,11 +108,13 @@ def algebraic_sum(img1, img2):
     Sum of two color planes - product / 255
     """
     if img1.shape == img2.shape and img1.dtype == img2.dtype:
-        it = np.nditer([img1, img2, None])
-        for x1, x2, res in it:
-            t = int(round(float(x1 * x2) / 255))
-            res[...] = (x1 + x2) - t
-        return it.operands[2]
+        return np.subtract(
+            np.add(img1, img2),
+            np.divide(
+                np.multiply(img1, img2),
+                255
+            )
+        )
     else:
         raise ValueError("Image size or dtype mismatch")
 
@@ -119,10 +124,10 @@ def algebraic_product(img1, img2):
     Product of two color planes / 255
     """
     if img1.shape == img2.shape and img1.dtype == img2.dtype:
-        it = np.nditer([img1, img2, None])
-        for x1, x2, res in it:
-            res[...] = int(round(float(x1 * x2) / 255))
-        return it.operands[2]
+        return np.divide(
+            np.multiply(img1, img2),
+            255
+        )
     else:
         raise ValueError("Image size or dtype mismatch")
 
@@ -133,13 +138,9 @@ def bounded_sum(img1, img2):
     if g > 255: g = 255
     """
     if img1.shape == img2.shape and img1.dtype == img2.dtype:
-        it = np.nditer([img1, img2, None])
-        for x1, x2, res in it:
-            s = x1 + x2
-            if s > 255:
-                s = 255
-            res[...] = s
-        return it.operands[2]
+        return np.clip(
+            np.add(img1, img2), 0, 255
+        )
     else:
         raise ValueError("Image size or dtype mismatch")
 
@@ -150,12 +151,12 @@ def bounded_product(img1, img2):
     if g < 0: g = 0
     """
     if img1.shape == img2.shape and img1.dtype == img2.dtype:
-        it = np.nditer([img1, img2, None])
-        for x1, x2, res in it:
-            p = (x1 * x2) - 255
-            if p < 0:
-                p = 0
-            res[...] = p
-        return it.operands[2]
+        return np.clip(
+            np.subtract(
+                np.multiply(img1, img2),
+                255
+            ),
+            0, 255
+        )
     else:
         raise ValueError("Image size or dtype mismatch")

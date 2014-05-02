@@ -132,10 +132,9 @@ class FilterSequenceEvaluator(SolutionFactory):
         plane_count = len(image1)
         for i in xrange(0, plane_count):
             # Difference of each color plane
-            diff_sum += sum([
-                abs(x1 - x2)
-                for x1, x2 in np.nditer([image1, image2])
-            ])
+            diff_sum += np.sum(
+                np.absolute(np.subtract(image1, image2))
+            )
         return diff_sum
 
     def _nearest_2_power(self, integer):
