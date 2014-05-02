@@ -28,36 +28,81 @@ class FilterCall(object):
         + str(self.dst_plane)
 
     @staticmethod
-    def make_calls(function_list, color_planes=3):
+    def run_sequence(image, filter_list):
+        """
+        Runs filter sequence on provided image
+        """
+        filtered_image = image
+        for flt in filter_list:
+            filtered_image = flt(filtered_image)
+        return filtered_image
+
+    @staticmethod
+    def make_calls(
+            function_list,
+            color_planes=3,
+            keep_list_order=False):
         """
         Create a list of callable filters
-        for various configurations of input color planes
+        for various configurations of input color planes.
         """
         calls = []
         plane_indexes = xrange(0, color_planes)
-        for flt in function_list:
-            # Filter argument (color planes) count
-            arg_count = flt.func_code.co_argcount
-            if arg_count <= color_planes:
+        if not keep_list_order:
+            # Group output by color planes
+            arg_count = set([
+                flt.func_code.co_argcount
+                for flt in function_list
+            ])
+            if len(arg_count) > 1:
+                raise ValueError(
+                    "Filters should have the same number of arguments")
+            elif list(arg_count)[0] > color_planes:
+                raise ValueError(
+                    "Filter argument count > color plane count")
+            else:
+                arg_count = list(arg_count)[0]
+                calls = []
+                plane_indexes = xrange(0, color_planes)
                 if arg_count == 1:
-                    # Single argument filter:
-                    # src and dst planes are the same
                     for i in plane_indexes:
-                        calls += [FilterCall(flt, [i], i)]
+                        for flt in function_list:
+                            calls += [FilterCall(flt, [i], i)]
                 else:
-                    # Multiple argument filter:
-                    # overwrite result into one of input planes.
-                    # Take all possible combinations with regards to
-                    # filter argument count
                     combos = [
                         list(c)
                         for c in it.combinations(plane_indexes, arg_count)
                     ]
                     for combo in combos:
                         for dst in combo:
-                            calls += [FilterCall(flt, combo, dst)]
-            else:
-                # Filter argument count is higher than color plane count
-                # Skip this one?
-                continue
-        return calls
+                            for flt in function_list:
+                                calls += [FilterCall(flt, combo, dst)]
+                return calls
+        else:
+            # Group output by filters
+            for flt in function_list:
+                # Filter argument (color planes) count
+                arg_count = flt.func_code.co_argcount
+                if arg_count <= color_planes:
+                    if arg_count == 1:
+                        # Single argument filter:
+                        # src and dst planes are the same
+                        for i in plane_indexes:
+                            calls += [FilterCall(flt, [i], i)]
+                    else:
+                        # Multiple argument filter:
+                        # overwrite result into one of input planes.
+                        # Take all possible combinations with regards to
+                        # filter argument count
+                        combos = [
+                            list(c)
+                            for c in it.combinations(plane_indexes, arg_count)
+                        ]
+                        for combo in combos:
+                            for dst in combo:
+                                calls += [FilterCall(flt, combo, dst)]
+                else:
+                    # Filter argument count is higher than color plane count
+                    # Skip this one?
+                    continue
+            return calls

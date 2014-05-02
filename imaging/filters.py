@@ -4,30 +4,36 @@ import skimage.morphology as fm
 import numpy as np
 import scipy.ndimage.filters as sf
 
+_selem = np.array([
+    [1, 1, 1],
+    [1, 1, 1],
+    [1, 1, 1]
+])
+
 
 # Single argument filters
 def mean(img):
-    return fr.mean(img)
+    return fr.mean(img, fm.square(3))
 
 
 def minimum(img):
-    return fr.minimum(img)
+    return fr.minimum(img, fm.square(3))
 
 
 def maximum(img):
-    return fr.maximum(img)
+    return fr.maximum(img, fm.square(3))
 
 
 def vsobel(img):
-    return f.vsobel(img)
+    return (img * f.vsobel(img)).astype(img.dtype)
 
 
 def hsobel(img):
-    return f.hsobel(img)
+    return (img * f.hsobel(img)).astype(img.dtype)
 
 
 def sobel(img):
-    return f.sobel(img)
+    return (img * f.sobel(img)).astype(img.dtype)
 
 
 def lightedge(img):
@@ -52,13 +58,11 @@ def darkedge(img):
 
 
 def erosion(img):
-    selem = np.array([1, 1, 1], [1, 1, 1], [1, 1, 1])
-    return fm.erosion(img, selem)
+    return fm.erosion(img, fm.square(3))
 
 
 def dilation(img):
-    selem = np.array([1, 1, 1], [1, 1, 1], [1, 1, 1])
-    return fm.dilation(img, selem)
+    return fm.dilation(img, fm.square(3))
 
 
 def inversion(img):

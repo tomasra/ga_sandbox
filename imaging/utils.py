@@ -1,4 +1,4 @@
-from skimage.data import load
+from skimage.data import load, imread
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -8,7 +8,7 @@ def read_image(filepath):
     Reads a PNG image and returns three numpy arrays
     (as RGB color planes)
     """
-    input = load(filepath)
+    input = imread(filepath)
     # Take RGB planes (exclude alpha channel)
     return [
         input[:, :, i]
