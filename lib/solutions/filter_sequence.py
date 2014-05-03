@@ -1,4 +1,4 @@
-from lib.chromosomes.binary import BinaryChromosome
+from lib.chromosomes.integer import IntegerChromosome
 from lib.solution import Solution, SolutionFactory
 from imaging.filter_call import FilterCall
 import numpy as np
@@ -8,11 +8,12 @@ class FilterSequenceSolution(Solution):
     def __init__(
             self,
             evaluator,
-            encoding_bits,
+            filter_count,
             seq_length,
             sequence=[]):
         self.evaluator = evaluator
-        self.encoding_bits = encoding_bits
+        # self.encoding_bits = encoding_bits
+        self.filter_count = filter_count
         self.seq_length = seq_length
         self.sequence = sequence
         # Cached fitness value
@@ -22,32 +23,15 @@ class FilterSequenceSolution(Solution):
         """
         Represent each filter from the sequence as bit string
         """
-        binary_repr = [
-            [
-                idx >> i & 1
-                for i in range(self.encoding_bits, -1, -1)
-            ]
-            for idx in self.sequence
-        ]
-        content = np.array(binary_repr).flatten()
-        return BinaryChromosome(content=content)
+        return IntegerChromosome(
+            0, self.filter_count - 1,
+            content=self.sequence)
 
     def decode(self, chromosome):
         """
         Parse filter sequence from binary chromosome
         """
-        # TO REFACTOR
-        padding_zeros = 8 - self.encoding_bits
-
-        self.sequence = [
-            np.packbits(
-                np.pad(fragment, (padding_zeros, 0), 'constant')
-            )[0]
-            for fragment in np.split(
-                chromosome.content,
-                len(chromosome) / self.encoding_bits
-            )
-        ]
+        self.sequence = chromosome.content
         # Reset cached fitness
         self.cached_fitness = None
         return self
@@ -61,12 +45,14 @@ class FilterSequenceSolution(Solution):
         return self.cached_fitness
 
     def initialize_chromosome(self):
-        return BinaryChromosome(
-            length=self.encoding_bits * self.seq_length)
+        return IntegerChromosome(
+            0, self.filter_count - 1,
+            length=self.seq_length
+        )
 
 
 class FilterSequenceEvaluator(SolutionFactory):
-    SEQUENCE_LENGTH = 30
+    SEQUENCE_LENGTH = 15
 
     def __init__(
             self,
@@ -77,10 +63,6 @@ class FilterSequenceEvaluator(SolutionFactory):
         # All available filters represented as functions
         self.filter_calls = filter_calls
 
-        # Nearest power of 2 for current filter call count
-        # I.e. 68 filters need 7 bits (0-127) to be encoded
-        self.encoding_bits = self._nearest_2_power(len(self.filter_calls))
-
         # Images before filtering
         self.source_images = source_images
 
@@ -90,7 +72,7 @@ class FilterSequenceEvaluator(SolutionFactory):
     def create(self):
         return FilterSequenceSolution(
             self,
-            self.encoding_bits,
+            len(self.filter_calls),
             self.SEQUENCE_LENGTH)
 
     def fitness(self, sequence):
@@ -155,9 +137,3 @@ class FilterSequenceEvaluator(SolutionFactory):
             )
             for i in xrange(plane_count)
         ])
-
-    def _nearest_2_power(self, integer):
-        i = 1
-        while 2**i < integer:
-            i += 1
-        return i
