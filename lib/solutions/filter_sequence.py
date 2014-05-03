@@ -1,6 +1,5 @@
 from lib.chromosomes.binary import BinaryChromosome
 from lib.solution import Solution, SolutionFactory
-from lib.helpers import Helpers
 from imaging.filter_call import FilterCall
 import numpy as np
 
@@ -21,21 +20,31 @@ class FilterSequenceSolution(Solution):
         """
         Represent each filter from the sequence as bit string
         """
-        binary_string = [
-            Helpers.int_to_bin(idx, self.encoding_bits)
+        binary_repr = [
+            [
+                idx >> i & 1
+                for i in range(self.encoding_bits, -1, -1)
+            ]
             for idx in self.sequence
         ]
-        return BinaryChromosome(content=binary_string)
+        content = np.array(binary_repr).flatten()
+        return BinaryChromosome(content=content)
 
     def decode(self, chromosome):
         """
         Parse filter sequence from binary chromosome
         """
+        # TO REFACTOR
+        padding_zeros = 8 - self.encoding_bits
+
         self.sequence = [
-            Helpers.bin_to_int(encoded_filter)
-            for encoded_filter in Helpers.enumerate_chunks(
-                chromosome,
-                self.encoding_bits)
+            np.packbits(
+                np.pad(fragment, (padding_zeros, 0), 'constant')
+            )[0]
+            for fragment in np.split(
+                chromosome.content,
+                len(chromosome) / self.encoding_bits
+            )
         ]
         return self
 
@@ -128,14 +137,16 @@ class FilterSequenceEvaluator(SolutionFactory):
         Sum of pixel differences
         Images - 2d numpy arrays
         """
-        diff_sum = 0
         plane_count = len(image1)
-        for i in xrange(0, plane_count):
+        return np.sum([
             # Difference of each color plane
-            diff_sum += np.sum(
-                np.absolute(np.subtract(image1, image2))
+            np.sum(
+                np.absolute(
+                    np.subtract(image1[i], image2[i])
+                )
             )
-        return diff_sum
+            for i in xrange(plane_count)
+        ])
 
     def _nearest_2_power(self, integer):
         i = 1
