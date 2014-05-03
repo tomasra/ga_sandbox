@@ -12,7 +12,7 @@ def read_image(filepath):
     # Take RGB planes (exclude alpha channel)
     return [
         input[:, :, i]
-        for i in xrange(0, 3)
+        for i in xrange(3)
     ]
 
 
@@ -25,6 +25,6 @@ def render_image(image):
     alpha = np.empty_like(image[0])
     alpha.fill(255)
     # Combine all channels into one image with third dimension
-    combined_image = np.dstack(tuple(image + alpha))
+    combined_image = np.dstack(tuple(image + [alpha]))
     plt.imshow(combined_image)
     plt.show()
