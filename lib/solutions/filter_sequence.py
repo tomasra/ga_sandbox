@@ -50,24 +50,29 @@ class FilterSequenceSolution(Solution):
             length=self.seq_length
         )
 
+    def __repr__(self):
+        return "[" + ", ".join([str(a) for a in self.sequence]) + "]"
+
 
 class FilterSequenceEvaluator(SolutionFactory):
-    SEQUENCE_LENGTH = 15
+    SEQUENCE_LENGTH = 80
 
     def __init__(
             self,
             filter_calls,
-            source_images,
+            input_images,
             target_images,
             color_planes=3):
         # All available filters represented as functions
         self.filter_calls = filter_calls
+        self.input_images = input_images    # Images before filtering
+        self.target_images = target_images  # Images expected after filtering
 
-        # Images before filtering
-        self.source_images = source_images
-
-        # Images expected after filtering
-        self.target_images = target_images
+        # Image count
+        if len(input_images) != len(target_images):
+            raise ValueError("Input and target image counts do not match")
+        else:
+            self.image_count = len(input_images)
 
     def create(self):
         return FilterSequenceSolution(
@@ -79,15 +84,14 @@ class FilterSequenceEvaluator(SolutionFactory):
         """
         Average fitness of all source/target image pairs
         """
-        image_count = len(self.source_images)
         fitness_sum = sum([
             self._fitness_one(
-                self.source_images[i],
+                self.input_images[i],
                 self.target_images[i],
                 sequence)
-            for i in xrange(0, image_count)
+            for i in xrange(self.image_count)
         ])
-        return fitness_sum / image_count
+        return fitness_sum / self.image_count
 
     def call_list(self, sequence):
         """
