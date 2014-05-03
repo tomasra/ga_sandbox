@@ -15,6 +15,8 @@ class FilterSequenceSolution(Solution):
         self.encoding_bits = encoding_bits
         self.seq_length = seq_length
         self.sequence = sequence
+        # Cached fitness value
+        self.cached_fitness = None
 
     def encode(self):
         """
@@ -46,11 +48,17 @@ class FilterSequenceSolution(Solution):
                 len(chromosome) / self.encoding_bits
             )
         ]
+        # Reset cached fitness
+        self.cached_fitness = None
         return self
 
     @property
     def fitness(self):
-        return self.evaluator.fitness(self.sequence)
+        if not self.cached_fitness:
+            self.cached_fitness = self.evaluator.fitness(
+                self.sequence
+            )
+        return self.cached_fitness
 
     def initialize_chromosome(self):
         return BinaryChromosome(
