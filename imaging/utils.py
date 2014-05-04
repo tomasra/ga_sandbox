@@ -1,6 +1,7 @@
 from skimage.data import load, imread
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 
 def read_image(filepath):
@@ -10,10 +11,11 @@ def read_image(filepath):
     """
     input = imread(filepath)
     # Take RGB planes (exclude alpha channel)
-    return [
+    rgb = [
         input[:, :, i]
         for i in xrange(3)
     ]
+    return rgb
 
 
 def render_image(image):
@@ -25,6 +27,15 @@ def render_image(image):
     alpha = np.empty_like(image[0])
     alpha.fill(255)
     # Combine all channels into one image with third dimension
-    combined_image = np.dstack(tuple(image + [alpha]))
+    rgb = [plane.astype(np.uint8) for plane in image]
+    combined_image = np.dstack(tuple(rgb + [alpha]))
     plt.imshow(combined_image)
+    plt.show()
+
+
+def render_grayscale(image):
+    """
+    Image - one numpy array
+    """
+    plt.imshow(image, cmap=cm.Greys_r)
     plt.show()

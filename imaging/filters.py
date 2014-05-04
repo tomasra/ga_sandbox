@@ -1,84 +1,87 @@
-import skimage.filter as f
 import skimage.filter.rank as fr
 import skimage.morphology as fm
 import numpy as np
 import scipy.ndimage.filters as sf
-
-_selem = np.array([
-    [1, 1, 1],
-    [1, 1, 1],
-    [1, 1, 1]
-])
+import scipy.ndimage.morphology as sm
 
 
 # Single argument filters
 def mean(img):
-    return fr.mean(img, fm.square(3))
+    result = fr.mean(img, fm.square(3))
+    return result
 
 
 def minimum(img):
-    return fr.minimum(img, fm.square(3))
+    result = sf.minimum_filter(img, size=3)
+    return result
 
 
 def maximum(img):
-    return fr.maximum(img, fm.square(3))
+    return sf.maximum_filter(img, size=3)
 
 
 def vsobel(img):
-    # return (img * f.vsobel(img)).astype(img.dtype)
-    return np.multiply(
-        img,
-        f.vsobel(img)
-    ).astype(img.dtype)
+    result = sf.sobel(img.astype(np.int16), axis=1)
+    # With normalization
+    result /= 8
+    result += 128
+    result = result.astype(img.dtype)
+    return result
 
 
 def hsobel(img):
-    # return (img * f.hsobel(img)).astype(img.dtype)
-    return np.multiply(
-        img,
-        f.hsobel(img)
+    # With normalization
+    result = np.add(
+        np.divide(
+            sf.sobel(img.astype(np.int16), axis=0),
+            8
+        ),
+        128
     ).astype(img.dtype)
+    return result
 
 
 def sobel(img):
-    # return (img * f.sobel(img)).astype(img.dtype)
-    return np.multiply(
-        img,
-        f.sobel(img)
+    img_int16 = img.astype(np.int16)
+    result = np.add(
+        np.divide(
+            np.hypot(
+                sf.sobel(img_int16, axis=0),
+                sf.sobel(img_int16, axis=1)
+            ),
+            8
+        ),
+        128
     ).astype(img.dtype)
+    return result
 
 
 def lightedge(img):
-    # http://homepages.inf.ed.ac.uk/rbf/HIPR2/log.htm
-    laplacian = np.array([
-        [0, -1, 0],
-        [-1, 4, -1],
-        [0, -1, 0]
-    ])
-    return sf.convolve(img, laplacian)
+    result = inversion(darkedge(img))
+    return result
 
 
 def darkedge(img):
-    # http://homepages.inf.ed.ac.uk/rbf/HIPR2/log.htm
-    laplacian = np.array([
-        [0, -1, 0],
-        [-1, 4, -1],
-        [0, -1, 0]
-    ])
-    # laplacian + 255
-    return inversion(sf.convolve(img, laplacian))
+    result = sf.laplace(img.astype(np.int16))
+    result /= 4
+    result += 128
+    result = result.astype(img.dtype)
+    return result
 
 
 def erosion(img):
-    return fm.erosion(img, fm.square(3))
+    result = sm.grey_erosion(img, size=(3, 3))
+    return result
 
 
 def dilation(img):
-    return fm.dilation(img, fm.square(3))
+    result = sm.grey_dilation(img, size=(3, 3))
+    return result
 
 
 def inversion(img):
-    return np.subtract(255, img)
+    result = np.subtract(255, img)
+    return result
 
 
 # Two-argument filters
