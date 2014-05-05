@@ -24,7 +24,7 @@ class FilterSequenceSolution(Solution):
         Represent each filter from the sequence as bit string
         """
         return IntegerChromosome(
-            0, self.filter_count - 1,
+            0, self.filter_count,
             content=self.sequence)
 
     def decode(self, chromosome):
@@ -46,16 +46,23 @@ class FilterSequenceSolution(Solution):
 
     def initialize_chromosome(self):
         return IntegerChromosome(
-            0, self.filter_count - 1,
+            0, self.filter_count,
             length=self.seq_length
         )
 
     def __repr__(self):
-        return "[" + ", ".join([str(a) for a in self.sequence]) + "]"
+        s = "["
+        s += ", ".join([
+            str(a)
+            for a in self.sequence
+            if a < self.filter_count
+        ])
+        s += "]"
+        return s
 
 
 class FilterSequenceEvaluator(SolutionFactory):
-    SEQUENCE_LENGTH = 80
+    SEQUENCE_LENGTH = 15
 
     def __init__(
             self,
@@ -67,6 +74,7 @@ class FilterSequenceEvaluator(SolutionFactory):
         self.filter_calls = filter_calls
         self.input_images = input_images    # Images before filtering
         self.target_images = target_images  # Images expected after filtering
+        self.color_planes = color_planes
 
         # Image count
         if len(input_images) != len(target_images):
@@ -124,7 +132,8 @@ class FilterSequenceEvaluator(SolutionFactory):
         plane_count = len(source_image)
         # REFACTOR THIS!
         height, width = source_image[0].shape[0], source_image[0].shape[1]
-        return 1.0 - float(diff) / (plane_count * width * height * 255)
+        fitness = 1.0 - float(diff) / (plane_count * width * height * 255)
+        return fitness
 
     def _image_diff(self, image1, image2):
         """
@@ -136,7 +145,10 @@ class FilterSequenceEvaluator(SolutionFactory):
             # Difference of each color plane
             np.sum(
                 np.absolute(
-                    np.subtract(image1[i], image2[i])
+                    np.subtract(
+                        image1[i].astype(np.int16),
+                        image2[i].astype(np.int16)
+                    )
                 )
             )
             for i in xrange(plane_count)
