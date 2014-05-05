@@ -7,12 +7,14 @@ class Algorithm(object):
                  crossover_strategy,
                  selection_strategy,
                  population_size=10,
-                 mutation_rate=0.01):
+                 mutation_rate=0.01,
+                 elitism_count=4):
         self._solution_factory = solution_factory
         self._crossover_strategy = crossover_strategy
         self._selection_strategy = selection_strategy
         self._population_size = population_size
         self._mutation_rate = mutation_rate
+        self._elitism_count = elitism_count
         # Start with new random population
         self.initialize_population()
 
@@ -36,28 +38,20 @@ class Algorithm(object):
         # Single generation
         else:
             new_chromos = []
-            parent1, parent2 = None, None
 
-            # Selection and crossover
-            for i in xrange(len(self._population)):
-                # Odd number - pick a chromosome
-                if i % 2 == 0:
-                    parent1 = self._selection_strategy.run(self._population)
-                # Even number - pick another, do crossover, save offspring
-                else:
-                    parent2 = self._selection_strategy.run(self._population)
-                    offspring1, offspring2 = self._crossover_strategy.run(
-                        parent1, parent2)
-                    new_chromos += [offspring1, offspring2]
-                    parent1, parent2 = None, None
+            if self._elitism_count:
+                # Take specified number of best chromosomes
+                new_chromos += self._population.best_chromosomes(
+                    self._elitism_count)
 
-            # Need one more chromosome?
-            if parent1 and not parent2:
-                new_chromos += [parent1]
-
-            # Mutation
-            for chromo in new_chromos:
-                chromo.mutate(self._mutation_rate)
+            while len(new_chromos) < len(self._population):
+                chromo1 = self._selection_strategy.run(self.population)
+                chromo2 = self._selection_strategy.run(self.population)
+                chromo1, chromo2 = self._crossover_strategy.run(
+                    chromo1, chromo2)
+                chromo1.mutate(self._mutation_rate)
+                chromo2.mutate(self._mutation_rate)
+                new_chromos += [chromo1, chromo2]
 
             # Replace current population
             self._population = Population(

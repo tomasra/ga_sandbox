@@ -71,6 +71,21 @@ class PopulationTest(unittest.TestCase):
             chromosomes=chromos)
         self.assertEquals(population.total_fitness, 10)
 
+    def test_best_chromosomes(self):
+        """
+        Population - elite chromosomes
+        """
+        chromos = ["0000", "0111", "0001", "0011"]
+        population = Population(
+            _FakeSolutionFactory(),
+            chromosomes=chromos)
+        self.assertSequenceEqual(
+            population.best_chromosomes(2),
+            ["0111", "0011"])
+        self.assertRaises(
+            ValueError,
+            lambda: population.best_chromosomes(5))
+
 
 class _FakeSolution(Solution):
     """

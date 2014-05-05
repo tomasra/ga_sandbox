@@ -57,3 +57,23 @@ class Population(object):
     @property
     def average_fitness(self):
         return self._average_fitness
+
+    def best_chromosomes(self, count):
+        if count > len(self):
+            raise ValueError("Count is higher than total number of chromosomes")
+        else:
+            # Specified number of solutions with highest fitness
+            best_solutions = sorted(
+                self._solutions,
+                key=lambda s: s.fitness,
+                reverse=True)[:count]
+            best_solutions_indexes = [
+                self._solutions.index(s)
+                for s in best_solutions
+            ]
+            # Corresponding chromosomes
+            best_chromos = [
+                self._chromosomes[idx]
+                for idx in best_solutions_indexes
+            ]
+            return best_chromos
