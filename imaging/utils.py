@@ -1,6 +1,7 @@
 from skimage.data import load, imread
 import numpy as np
 import matplotlib.pyplot as plt
+plt.switch_backend('GTKAgg')
 import matplotlib.cm as cm
 
 
