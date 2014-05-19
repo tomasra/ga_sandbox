@@ -4,6 +4,20 @@ from lib.chromosome import Chromosome
 
 
 class BinaryChromosome(Chromosome):
+    def __init__(self, length=None, content=None):
+        """
+        For convenience: if content is passed as string,
+        convert it to numpy array
+        """
+        if isinstance(content, str):
+            converted_content = np.array([
+                int(char)
+                for char in content
+            ])
+        else:
+            converted_content = content
+        super(BinaryChromosome, self).__init__(length, converted_content)
+
     def mutate(self, rate):
         """
         Tries to flip each bit with a given probability

@@ -27,4 +27,5 @@ class BinaryChromosomeTests(unittest.TestCase):
         # Flip every second bit
         with patch('random.random', side_effect=random_vals):
             chromo.mutate(0.001)
-        self.assertEqual(chromo.content, "10100101")
+        content_str = "".join([str(c) for c in chromo.content])
+        self.assertEqual(content_str, "10100101")
