@@ -11,8 +11,9 @@ class ArithExpSolutionTests(unittest.TestCase):
         solution = ArithExpSolution(target=None, length=None)
         solution.expression = "6+5*4/2"
         chromo = solution.encode()
+        chromo_str = "".join([str(c) for c in chromo.content])
         self.assertIsInstance(chromo, BinaryChromosome)
-        self.assertEqual(chromo.content, "0110101001011100010011010010")
+        self.assertEqual(chromo_str, "0110101001011100010011010010")
 
     def test_decoding(self):
         """

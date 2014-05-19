@@ -19,23 +19,23 @@ class AlgorithmTests(unittest.TestCase):
             _FakeSolutionFactory(),
             crossover,
             selection,
-            population_size=5
+            population_size=6
         )
 
         # Check initial chromosomes
-        self.assertEquals(len(alg.population), 5)
+        self.assertEquals(len(alg.population), 6)
         for chromo in alg.population.chromosomes:
             self.assertEquals(chromo.content, "00000000")
 
         alg.run()
 
         # Check the result and operator call counts
-        self.assertEquals(len(alg.population), 5)
+        self.assertEquals(len(alg.population), 6)
         for chromo in alg.population.chromosomes:
             self.assertEquals(chromo.content, "10101010")
 
-        self.assertEquals(selection.call_count, 5)
-        self.assertEquals(crossover.call_count, 2)
+        self.assertEquals(selection.call_count, 6)
+        self.assertEquals(crossover.call_count, 3)
         self.assertEquals(_FakeChromosome.mutation_count, 5)
 
     def test_multiple_generations(self):
@@ -50,24 +50,24 @@ class AlgorithmTests(unittest.TestCase):
             _FakeSolutionFactory(),
             crossover,
             selection,
-            population_size=5
+            population_size=6
         )
 
         # Check initial chromosomes
-        self.assertEquals(len(alg.population), 5)
+        self.assertEquals(len(alg.population), 6)
         for chromo in alg.population.chromosomes:
             self.assertEquals(chromo.content, "00000000")
 
         alg.run(generations=3)
 
         # Check the result
-        self.assertEquals(len(alg.population), 5)
+        self.assertEquals(len(alg.population), 6)
         for chromo in alg.population.chromosomes:
             self.assertEquals(chromo.content, "10101010")
 
-        self.assertEquals(selection.call_count, 15)
+        self.assertEquals(selection.call_count, 18)
         self.assertEquals(crossover.call_count, 6)
-        self.assertEquals(_FakeChromosome.mutation_count, 15)
+        self.assertEquals(_FakeChromosome.mutation_count, 18)
 
 
 class _FakeChromosome(Chromosome):
@@ -78,6 +78,12 @@ class _FakeChromosome(Chromosome):
 
     def mutate(self, rate):
         _FakeChromosome.mutation_count += 1
+
+    def split(self, point):
+        return self.content[:point], self.content[point:]
+
+    def concat(self, other):
+        return self.content + other.content
 
     def _get_random(self, length):
         return "00000000"

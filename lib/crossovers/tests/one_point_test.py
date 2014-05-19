@@ -19,10 +19,14 @@ class OnePointCrossoverTest(unittest.TestCase):
                 # descendant = chromo1.crossover(chromo2, 0.9)
                 desc1, desc2 = crossover.run(chromo1, chromo2)
 
-        self.assertEqual(chromo1.content, "00001111")
-        self.assertEqual(chromo2.content, "11110000")
-        self.assertEqual(desc1.content, "00001100")
-        self.assertEqual(desc2.content, "11110011")
+        chromo1_str = "".join([str(c) for c in chromo1.content])
+        chromo2_str = "".join([str(c) for c in chromo2.content])
+        desc1_str = "".join([str(c) for c in desc1.content])
+        desc2_str = "".join([str(c) for c in desc2.content])
+        self.assertEqual(chromo1_str, "00001111")
+        self.assertEqual(chromo2_str, "11110000")
+        self.assertEqual(desc1_str, "00001100")
+        self.assertEqual(desc2_str, "11110011")
 
     def test_crossover_does_not_happen(self):
         """
@@ -36,7 +40,11 @@ class OnePointCrossoverTest(unittest.TestCase):
         with patch('random.random', return_value=0.7):
             desc1, desc2 = crossover.run(chromo1, chromo2)
 
-        self.assertEqual(chromo1.content, "00001111")
-        self.assertEqual(chromo2.content, "11110000")
-        self.assertEqual(desc1.content, "00001111")
-        self.assertEqual(desc2.content, "11110000")
+        chromo1_str = "".join([str(c) for c in chromo1.content])
+        chromo2_str = "".join([str(c) for c in chromo2.content])
+        desc1_str = "".join([str(c) for c in desc1.content])
+        desc2_str = "".join([str(c) for c in desc2.content])
+        self.assertEqual(chromo1_str, "00001111")
+        self.assertEqual(chromo2_str, "11110000")
+        self.assertEqual(desc1_str, "00001111")
+        self.assertEqual(desc2_str, "11110000")
