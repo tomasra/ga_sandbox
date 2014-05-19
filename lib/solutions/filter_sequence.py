@@ -62,18 +62,19 @@ class FilterSequenceSolution(Solution):
 
 
 class FilterSequenceEvaluator(SolutionFactory):
-    SEQUENCE_LENGTH = 15
-
     def __init__(
             self,
             filter_calls,
             input_images,
             target_images,
+            sequence_length=20,
             color_planes=3):
         # All available filters represented as functions
         self.filter_calls = filter_calls
         self.input_images = input_images    # Images before filtering
         self.target_images = target_images  # Images expected after filtering
+        # Number of filters in the solution sequence
+        self.sequence_length = sequence_length
         self.color_planes = color_planes
 
         # Image count
@@ -86,7 +87,7 @@ class FilterSequenceEvaluator(SolutionFactory):
         return FilterSequenceSolution(
             self,
             len(self.filter_calls),
-            self.SEQUENCE_LENGTH)
+            self.sequence_length)
 
     def fitness(self, sequence):
         """
