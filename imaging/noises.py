@@ -22,6 +22,16 @@ def salt_and_pepper(image, probability):
         return new_image
 
 
+def salt_and_pepper_all(images, probability):
+    """
+    Salt and pepper noise for all images
+    """
+    return [
+        salt_and_pepper(image, probability)
+        for image in images
+    ]
+
+
 def gaussian(image, mu=0.0, sigma=10.0):
     if isinstance(image, list):
         return [
@@ -43,6 +53,16 @@ def gaussian(image, mu=0.0, sigma=10.0):
                 else:
                     new_image[i][j] = point
         return new_image
+
+
+def gaussian_all(images, mu=0.0, sigma=10.0):
+    """
+    Gaussian noise for all images
+    """
+    return [
+        gaussian(image, mu, sigma)
+        for image in images
+    ]
 
 
 def poisson(image):
