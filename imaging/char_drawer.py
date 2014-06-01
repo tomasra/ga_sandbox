@@ -9,12 +9,18 @@ class CharDrawer(object):
             self,
             image_size=50,
             char_size=36,
-            random_colors=True):
+            text_color=None,
+            bg_color=None):
         font_path = os.path.join(os.getcwd(), "imaging/fonts/FreeSans.ttf")
         self.font = ImageFont.truetype(font_path, char_size)
         self.image_size = image_size
         self.char_size = char_size
-        if random_colors:
+
+        if text_color and bg_color:
+            self.text_color = text_color
+            self.bg_color = bg_color
+        elif not text_color and not bg_color:
+            # Random colors?
             self.text_color = (
                 rnd.randint(0, 255),
                 rnd.randint(0, 255),
@@ -25,6 +31,9 @@ class CharDrawer(object):
                 rnd.randint(0, 255),
                 rnd.randint(0, 255)
             )
+        else:
+            raise ValueError(
+                "Both text and background color should be specified")
 
     def create_pair(self, character):
         """
