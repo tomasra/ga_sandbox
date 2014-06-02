@@ -1,6 +1,7 @@
 from lib.chromosomes.integer import IntegerChromosome
 from lib.solution import Solution, SolutionFactory
 from imaging.filter_call import FilterCall
+from imaging.utils import char_parameters
 import numpy as np
 
 
@@ -62,6 +63,13 @@ class FilterSequenceSolution(Solution):
 
 
 class FilterSequenceEvaluator(SolutionFactory):
+    _text_color_expected = np.array([255, 255, 255])
+    _bg_color_expected = np.array([0, 0, 0])
+    _region_count_expected = 1
+    _max_color_diff = np.linalg.norm(
+        _text_color_expected - _bg_color_expected
+    )
+
     def __init__(
             self,
             filter_calls,
@@ -78,10 +86,10 @@ class FilterSequenceEvaluator(SolutionFactory):
         self.color_planes = color_planes
 
         # Image count
-        if len(input_images) != len(target_images):
-            raise ValueError("Input and target image counts do not match")
-        else:
-            self.image_count = len(input_images)
+        # if len(input_images) != len(target_images):
+        #     raise ValueError("Input and target image counts do not match")
+        # else:
+        self.image_count = len(input_images)
 
     def create(self):
         return FilterSequenceSolution(
@@ -93,14 +101,23 @@ class FilterSequenceEvaluator(SolutionFactory):
         """
         Average fitness of all source/target image pairs
         """
-        fitness_sum = sum([
-            self._fitness_one(
-                self.input_images[i],
-                self.target_images[i],
-                sequence)
-            for i in xrange(self.image_count)
-        ])
-        return fitness_sum / self.image_count
+        if self.target_images:
+            # Easy case - target image(s) is/are known
+            fitness_sum = sum([
+                self._fitness_one(
+                    self.input_images[i],
+                    self.target_images[i],
+                    sequence)
+                for i in xrange(self.image_count)
+            ])
+            return fitness_sum / self.image_count
+        else:
+            # Hard case - no target image to compare against
+            fitness_sum = sum([
+                self._fitness_unknown_target(source_image, sequence)
+                for source_image in self.input_images
+            ])
+            return fitness_sum / self.image_count
 
     def call_list(self, sequence):
         """
@@ -123,6 +140,37 @@ class FilterSequenceEvaluator(SolutionFactory):
             image,
             self.call_list(sequence)
         )
+
+    def _fitness_unknown_target(self, source_image, sequence):
+        """
+        Fitness function when target image is unknown.
+        Perform edge detection, label and count contours - less is better.
+        """
+        # filtered_image = self._filter_image(source_image, sequence)
+        # regions = connected_regions(filtered_image)
+        # return 1.0 / regions
+
+        filtered_image = self._filter_image(source_image, sequence)
+        text_color, bg_color, text_regions = char_parameters(filtered_image)
+
+        text_color_diff = np.linalg.norm(
+            text_color - self._text_color_expected
+        )
+        bg_color_diff = np.linalg.norm(
+            bg_color - self._bg_color_expected
+        )
+        if text_regions == 0:
+            region_val = 0
+        else:
+            region_val = 1.0 / text_regions
+
+        # Three equally important parts
+        fitness = (
+            text_color_diff / self._max_color_diff / 3.0 +
+            bg_color_diff / self._max_color_diff / 3.0 +
+            region_val / 3.0
+        )
+        return fitness
 
     def _fitness_one(self, source_image, target_image, sequence):
         """
