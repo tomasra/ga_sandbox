@@ -40,9 +40,12 @@ class Algorithm(object):
             new_chromos = []
 
             if self._elitism_count:
-                # Take specified number of best chromosomes
-                new_chromos += self._population.best_chromosomes(
-                    self._elitism_count)
+                # Take specified number of best solutions
+                best_solutions = self._population.best_solutions(
+                    self._elitism_count
+                )
+            else:
+                best_solutions = []
 
             while len(new_chromos) < len(self._population):
                 chromo1 = self._selection_strategy.run(self.population)
@@ -56,5 +59,6 @@ class Algorithm(object):
             # Replace current population
             self._population = Population(
                 self._solution_factory,
-                chromosomes=new_chromos
+                chromosomes=new_chromos,
+                solutions=best_solutions
             )
