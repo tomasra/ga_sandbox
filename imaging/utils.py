@@ -1,5 +1,6 @@
 from skimage.data import load, imread
 import skimage.color as color
+import skimage.morphology as mph
 from PIL import Image
 import imaging.filters as flt
 import scipy.ndimage.measurements as msr
@@ -104,6 +105,8 @@ def char_parameters(image):
     : text_color - self explanatory
     : bg_color - self explanatory
     : text_regions - count of separate connected regions with text_color
+    : thickness - average shape thickness, evaluated by
+                  running dilation until nothing remains
     """
     # Reduce to two colors
     colors = 2
@@ -129,6 +132,8 @@ def char_parameters(image):
         # Image consists of just a single color
         text_color, bg_color = centroids[0], centroids[0]
         text_regions = 0
+        ttb_ratio = 0
+        # erosion_count = 0
     else:
         # Assuming that text color is the one having less pixels
         text_idx = np.argmin(np.bincount(quantized))
@@ -140,7 +145,30 @@ def char_parameters(image):
         for_labeling = quantized_idx == text_idx
         labeled, text_regions = msr.label(for_labeling)
 
-    return text_color, bg_color, text_regions
+        # Text-to-background ratio
+        text_pixels = len(np.where(quantized == text_idx)[0])
+        bg_pixels = len(np.where(quantized == bg_idx)[0])
+        ttb_ratio = float(text_pixels) / float(bg_pixels)
+        # import pdb; pdb.set_trace()
+
+        # Estimate shape thickness: apply multiple erosions
+        # eroded = quantized_idx
+
+        # Check if either character or background is white.
+        # In case of white background - invert.
+        # if len(np.where(eroded == 1)[0]) > len(np.where(eroded == 0)[0]):
+        #     eroded = 1 - eroded
+
+        # erosion_count = 0
+        # while len(np.where(eroded == 1)[0]) > 0:
+        #     # Repeat erosion until no more white areas remain
+        #     eroded = mph.binary_erosion(
+        #         eroded,
+        #         mph.rectangle(3, 3))
+        #     erosion_count += 1
+
+
+    return text_color, bg_color, text_regions, ttb_ratio
 
 
 def extract_boundaries(image):
