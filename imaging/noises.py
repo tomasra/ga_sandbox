@@ -63,11 +63,3 @@ def gaussian_all(images, mu=0.0, sigma=10.0):
         gaussian(image, mu, sigma)
         for image in images
     ]
-
-
-def poisson(image):
-    pass
-
-
-def speckle(image):
-    pass
