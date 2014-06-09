@@ -86,17 +86,22 @@ def quantize(image, colors=2, return_colors=False):
         for i in xrange(3)
     ]
 
-
     # import pdb; pdb.set_trace()
     return final
 
 
-    # pil_image = Image.fromarray(image)
-    # # quantized = pil_image.quantize(colors, kmeans=1)
-    # quantized = pil_image.convert('P', palette=Image.ADAPTIVE, colors=colors)
+def binarize(image):
+    quantized = quantize(image, colors=2)
+    # Now replace almost-black with completely black
+    # Same with almost-white
+    for plane in quantized:
+        image_black = np.min(plane)
+        image_white = np.max(plane)
+        plane[plane == image_black] = 0     # True black
+        plane[plane == image_white] = 255   # True white
+
     # import pdb; pdb.set_trace()
-    # final = np.array(quantized) * 255
-    # return final
+    return quantized
 
 
 def char_parameters(image):
@@ -214,3 +219,33 @@ def connected_regions(image):
     return regions
     # edges = extract_boundaries(filtered_image)
     # regions = len(region_sizes(edges))
+
+
+def histogram(image):
+    return [
+        np.histogram(plane, bins=xrange(256))
+        for plane in image
+    ]
+
+
+def histogram_diff(hist1, hist2):
+    # import pdb; pdb.set_trace()
+    return sum([
+        np.sum(np.abs(pair[0][0] - pair[1][0]))
+        for pair in zip(hist1, hist2)
+    ])
+
+
+def ideal_histogram(image, ttb_ratio):
+    total = image[0].shape[0] * image[0].shape[1]
+    # Not an error here, np.histogram leaves out one element
+    pixels = np.zeros(255).astype(np.uint32)
+    pixels[0] = total * ttb_ratio        # Black text pixels
+    pixels[254] = total * (1.0 - ttb_ratio)  # White background pixels
+    bins = np.array(xrange(256))
+    return [(pixels, bins)] * 3
+
+
+def max_histogram_diff(image):
+    total_pixels = image[0].shape[0] * image[0].shape[1]
+    return total_pixels * 2 * len(image)
