@@ -1,6 +1,7 @@
 import os
 import random as rnd
 import numpy as np
+from imaging.utils import binarize
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -48,9 +49,14 @@ class CharDrawer(object):
             character,
             text_color=self.text_color,
             bg_color=self.bg_color)
+
+        bw_image = self._image_to_numpy(char_blacknwhite)
+        bw_image = binarize(bw_image)
+        color_image = self._image_to_numpy(char_color)
+
         return (
-            self._image_to_numpy(char_blacknwhite),
-            self._image_to_numpy(char_color)
+            bw_image,
+            color_image
         )
 
     def _create_character(self, character, text_color, bg_color):
