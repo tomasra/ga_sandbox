@@ -3,33 +3,47 @@
 import run_chars as chars
 from imaging.utils import render_image
 from imaging.char_drawer import CharDrawer
+import os
+import pickle
 
-RUNS = 5
+RUNS = 10
+FITNESS_THRESHOLD = 0.97
 
+#---------------------------------------------------
 # Salt-and-pepper
+# Known target image
+#---------------------------------------------------
 source_image = chars.get_snp_noise_char(u'A')
 target_image = chars.get_binary_char(u'A')
 
-render_image(source_image)
-solution_images = []
+results = []
 for i in xrange(RUNS):
-
-    (
-        average_fitnesses,
-        best_fitnesses,
-        best_solution,
-        best_solution_image
-    ) = chars.run(
+    results += [chars.run(
         source_image,
-        target_image=target_image,
-        elitism=True)
-    solution_images += [best_solution_image]
+        target_image,
+        fitness_threshold=FITNESS_THRESHOLD,
+        elitism=True
+    )]
 
-render_image(
-    CharDrawer.create_mosaic(
-        solution_images,
-        5, 1
-    )
-)
 
+with open('results/snp_with_targets.pickle', 'w') as f:
+    pickle.dump(results, f)
+
+#---------------------------------------------------
 # Gaussian
+# Known target image
+#---------------------------------------------------
+source_image = chars.get_gaussian_noise_char(u'A')
+target_image = chars.get_binary_char(u'A')
+
+results = []
+for i in xrange(RUNS):
+    results += [chars.run(
+        source_image,
+        target_image,
+        fitness_threshold=FITNESS_THRESHOLD,
+        elitism=True
+    )]
+
+with open('results/gaussian_with_targets.pickle', 'w') as f:
+    pickle.dump(results, f)

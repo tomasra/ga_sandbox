@@ -63,22 +63,40 @@ evaluator = FilterSequenceEvaluator(
     filter_calls,
     training_input,
     training_target)
+    # [training_input[0]],
+    # [training_target[0]])
 
 # Algorithm setup
-crossover = OnePointCrossover(rate=0.7)
+crossover = OnePointCrossover(rate=0.8)
 selection = RouletteWheelSelection()
 alg = Algorithm(
     evaluator,
     crossover,
     selection,
-    population_size=2,
-    mutation_rate=0.001)
+    population_size=300,
+    mutation_rate=0.001,
+    elitism_count=30)
 
-for i in xrange(20):
+import pdb
+
+# for solution in alg.population.solutions:
+#     print solution.fitness, solution
+
+# pdb.set_trace()
+
+for i in xrange(800):
     alg.run()
-    s = "Average fitness: " + str(alg.population.average_fitness)
+    s = "Avg fitness: " + str(alg.population.average_fitness)
+    s += ", best fitness: " + str(alg.population.best_solution.fitness)
     s += ", best solution: " + str(alg.population.best_solution)
+    # for solution in alg.population.solutions:
+        # print solution.fitness, solution
+        # continue
+    # pdb.set_trace()
     print s
+
+for solution in alg.population.solutions:
+    print solution.fitness, solution
 
 
 # See results

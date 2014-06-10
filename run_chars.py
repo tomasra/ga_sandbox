@@ -11,21 +11,21 @@ from lib.solutions.filter_sequence import FilterSequenceEvaluator
 from imaging.filter_call import FilterCall
 
 # GA parameters
-FITNESS_THRESHOLD = 0.95
+FITNESS_THRESHOLD = 0.97
 POPULATION_SIZE = 300
 ELITISM_COUNT = 30
 CROSSOVER_RATE = 0.8
 MUTATION_RATE = 0.001
-CHROMOSOME_LENGTH = 20
+CHROMOSOME_LENGTH = 30
 
 # Character parameters
 ALL_CHARS = chars = u"AĄBCČDEĘĖFGHIĮYJKLMNOPRSŠTUŲŪVZŽ0123456789"
-TEXT_COLOR = (0, 180, 0)
+TEXT_COLOR = (0, 160, 0)
 BACKGROUND_COLOR = (0, 255, 0)
 
 # Noise parameters
-SNP_NOISE_PARAM = 0.2
-GAUSSIAN_NOISE_SIGMA = 50.0
+SNP_NOISE_PARAM = 0.15
+GAUSSIAN_NOISE_SIGMA = 40.0
 
 
 def get_clear_char(character):
@@ -66,7 +66,7 @@ def get_gaussian_noise_char(character, sigma=GAUSSIAN_NOISE_SIGMA):
     Returns color character image with gaussian noise
     """
     clear_char = get_clear_char(character)
-    noisified = noises.gaussian(clear_char, sigma)
+    noisified = noises.gaussian(clear_char, sigma=sigma)
     return noisified
 
 
@@ -74,11 +74,12 @@ def apply_filters(image, filter_sequence):
     """
     Apply filter sequence on image
     """
-    evaluator = FilterSequenceEvaluator(
-        FilterCall.all_calls(),
-        [image],
-        None
-    )
+    # filter_calls = [
+    #     FilterCall.all_calls()[idx]
+    #     for idx in filter_sequence
+    # ]
+    # return FilterCall.run_sequence(image, filter_calls)
+    evaluator = FilterSequenceEvaluator(FilterCall.all_calls(), [image], None)
     return evaluator._filter_image(image, filter_sequence)
 
 
@@ -99,6 +100,11 @@ def run(
         target_images=target_image,
         sequence_length=CHROMOSOME_LENGTH)
 
+    if elitism:
+        elitism_count = ELITISM_COUNT
+    else:
+        elitism_count = 0
+
     # Algorithm setup
     crossover = OnePointCrossover(rate=CROSSOVER_RATE)
     selection = RouletteWheelSelection()
@@ -108,7 +114,7 @@ def run(
         selection,
         population_size=POPULATION_SIZE,
         mutation_rate=MUTATION_RATE,
-        elitism_count=ELITISM_COUNT)
+        elitism_count=elitism_count)
 
     print "Running GA..."
     best_fitness = 0
@@ -124,7 +130,14 @@ def run(
         best_fitnesses += [alg.population.best_solution.fitness]
 
     best_solution = alg.population.best_solution.sequence
-    best_solution_image = evaluator._filter_image(source_image, best_solution)
+
+    # best_filter_calls = evaluator.call_list(best_solution)
+    # render_image(source_image)
+    # best_solution_image = FilterCall.run_sequence(
+    #     source_image, best_filter_calls)
+
+    # best_solution_image = evaluator._filter_image(source_image, best_solution)
+    best_solution_image = apply_filters(source_image, best_solution)
 
     return (
         average_fitnesses,
