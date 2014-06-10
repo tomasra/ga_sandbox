@@ -106,3 +106,37 @@ class FilterCall(object):
                     # Skip this one?
                     continue
             return calls
+
+    @staticmethod
+    def all_calls():
+        import imaging.filters as flt
+
+        # Filter setup
+        filters_one_arg = [
+            flt.mean,
+            flt.minimum,
+            flt.maximum,
+            flt.hsobel,
+            flt.vsobel,
+            flt.sobel,
+            flt.lightedge,
+            flt.darkedge,
+            flt.erosion,
+            flt.dilation,
+            flt.inversion
+        ]
+
+        filters_two_args = [
+            flt.logical_sum,
+            flt.logical_product,
+            flt.algebraic_sum,
+            flt.algebraic_product,
+            flt.bounded_sum,
+            flt.bounded_product
+        ]
+
+        # filter_calls = FilterCall.make_calls(filters)
+        filters1 = FilterCall.make_calls(filters_one_arg)
+        filters2 = FilterCall.make_calls(filters_two_args)
+        filter_calls = filters1 + filters2
+        return filter_calls
