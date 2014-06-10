@@ -23,6 +23,7 @@ CHROMOSOME_LENGTH = 30
 ALL_CHARS = chars = u"AĄBCČDEĘĖFGHIĮYJKLMNOPRSŠTUŲŪVZŽ0123456789"
 TEXT_COLOR = (0, 160, 0)
 BACKGROUND_COLOR = (0, 255, 0)
+TTB_RATIO = 0.1
 
 # Noise parameters
 SNP_NOISE_PARAM = 0.15
@@ -99,7 +100,8 @@ def run(
         filter_calls=FilterCall.all_calls(),
         input_images=[source_image],
         target_images=target_image,
-        sequence_length=CHROMOSOME_LENGTH)
+        sequence_length=CHROMOSOME_LENGTH,
+        ttb_ratio=TTB_RATIO)
 
     if elitism:
         elitism_count = ELITISM_COUNT

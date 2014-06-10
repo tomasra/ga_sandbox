@@ -1,7 +1,7 @@
 from lib.chromosomes.integer import IntegerChromosome
 from lib.solution import Solution, SolutionFactory
 from imaging.filter_call import FilterCall
-from imaging.utils import char_parameters
+import imaging.utils as iu
 import numpy as np
 
 
@@ -25,7 +25,7 @@ class FilterSequenceSolution(Solution):
         Represent each filter from the sequence as bit string
         """
         return IntegerChromosome(
-            0, self.filter_count,
+            1, self.filter_count,
             content=self.sequence)
 
     def decode(self, chromosome):
@@ -47,7 +47,7 @@ class FilterSequenceSolution(Solution):
 
     def initialize_chromosome(self):
         return IntegerChromosome(
-            0, self.filter_count,
+            1, self.filter_count,
             length=self.seq_length
         )
 
@@ -63,12 +63,12 @@ class FilterSequenceSolution(Solution):
 
 
 class FilterSequenceEvaluator(SolutionFactory):
-    _text_color_expected = np.array([255, 255, 255])
-    _bg_color_expected = np.array([0, 0, 0])
-    _region_count_expected = 1
-    _max_color_diff = np.linalg.norm(
-        _text_color_expected - _bg_color_expected
-    )
+    # _text_color_expected = np.array([255, 255, 255])
+    # _bg_color_expected = np.array([0, 0, 0])
+    # _region_count_expected = 1
+    # _max_color_diff = np.linalg.norm(
+    #     _text_color_expected - _bg_color_expected
+    # )
 
     def __init__(
             self,
@@ -76,7 +76,8 @@ class FilterSequenceEvaluator(SolutionFactory):
             input_images,
             target_images,
             sequence_length=20,
-            color_planes=3):
+            color_planes=3,
+            ttb_ratio=0.1):
         # All available filters represented as functions
         self.filter_calls = filter_calls
         self.input_images = input_images    # Images before filtering
@@ -90,6 +91,11 @@ class FilterSequenceEvaluator(SolutionFactory):
         #     raise ValueError("Input and target image counts do not match")
         # else:
         self.image_count = len(input_images)
+
+        self._ideal_histogram = iu.ideal_histogram(
+            input_images[0], ttb_ratio)
+        self._max_histogram_diff = iu.max_histogram_diff(
+            input_images[0])
 
     def create(self):
         return FilterSequenceSolution(
@@ -143,34 +149,26 @@ class FilterSequenceEvaluator(SolutionFactory):
 
     def _fitness_unknown_target(self, source_image, sequence):
         """
-        Fitness function when target image is unknown.
-        Perform edge detection, label and count contours - less is better.
+        Fitness function value when the target is unknown
+        Compares filtered image histogram with 'ideal' one
+        defined by text-to-background pixel ratio
         """
-        # filtered_image = self._filter_image(source_image, sequence)
-        # regions = connected_regions(filtered_image)
-        # return 1.0 / regions
-
         filtered_image = self._filter_image(source_image, sequence)
-        text_color, bg_color, text_regions = char_parameters(filtered_image)
+        actual_histogram = iu.histogram(filtered_image)
 
-        text_color_diff = np.linalg.norm(
-            text_color - self._text_color_expected
-        )
-        bg_color_diff = np.linalg.norm(
-            bg_color - self._bg_color_expected
-        )
-        if text_regions == 0:
-            region_val = 0
-        else:
-            region_val = 1.0 / text_regions
+        hist_diff = iu.histogram_diff(
+            self._ideal_histogram, actual_histogram)
+        fitness_val_hist = (
+            self._max_histogram_diff - hist_diff) / self._max_histogram_diff
+        region_count = iu.connected_regions(filtered_image)
+        fitness_val_regions = 0.0 if region_count == 0 else 1.0 / region_count
 
-        # Three equally important parts
-        fitness = (
-            text_color_diff / self._max_color_diff / 3.0 +
-            bg_color_diff / self._max_color_diff / 3.0 +
-            region_val / 3.0
+        # Equal weights for both parts
+        fitness_val = (
+            fitness_val_hist * 0.5 +
+            fitness_val_regions * 0.5
         )
-        return fitness
+        return fitness_val
 
     def _fitness_one(self, source_image, target_image, sequence):
         """

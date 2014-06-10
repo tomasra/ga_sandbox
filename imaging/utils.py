@@ -1,10 +1,12 @@
 from skimage.data import load, imread
 import skimage.color as color
 import skimage.morphology as mph
-from PIL import Image
+from PIL import Image, ImageOps
 import imaging.filters as flt
 import scipy.ndimage.measurements as msr
 import scipy.cluster.vq as vq
+# from pyemd import emd
+import cv
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -64,6 +66,15 @@ def rgb2gray(image):
     scikit_img = np.dstack(image)
     gray_img = (color.rgb2gray(scikit_img) * 255).astype(np.uint8)
     return gray_img
+
+
+def numpy2pil(image):
+    stacked = np.dstack(image)
+    return Image.fromarray(stacked)
+
+
+def pil2numpy(image):
+    return np.array(image)
 
 
 def quantize(image, colors=2, return_colors=False):
@@ -196,6 +207,8 @@ def region_sizes(image):
     """
     labeled, count = msr.label(image)
     # import pdb; pdb.set_trace()
+    # print count
+    # import pdb; pdb.set_trace()
     results = [
         len(np.dstack(np.where(labeled == i))[0])
         for i in xrange(1, count + 1)
@@ -207,18 +220,35 @@ def connected_regions(image):
     """
     Converts image into grayscale, quantizes, counts connected regions
     """
-    gray = rgb2gray(image)
-    quantized = quantize(gray)
-    # render_image(quantized)
-    # inverted = flt.inversion(quantized)
-    # regions = len(region_sizes(inverted))
-    regions = len(region_sizes(quantized))
-    if regions == 0:
-        regions = image[0].shape[0] * image[0].shape[1]
-    # print regions
-    return regions
-    # edges = extract_boundaries(filtered_image)
-    # regions = len(region_sizes(edges))
+    # render_image(image)
+
+    colors = 2
+
+    # Quantization into two colors
+    image_rgb = np.dstack(image)
+    pixels = np.reshape(
+        image_rgb,
+        (image_rgb.shape[0] * image_rgb.shape[1], image_rgb.shape[2])
+    )
+    centroids, _ = vq.kmeans(pixels, colors)
+    quantized, _ = vq.vq(pixels, centroids)
+    quantized_idx = quantized.reshape(
+        (image_rgb.shape[0], image_rgb.shape[1])
+    )
+
+    if len(centroids) > 1:
+        # for_render = (quantized_idx * 255).astype(np.uint8)
+        # render_image(for_render)
+        regions = len(region_sizes(quantized_idx))
+        regions_inverted = len(region_sizes(1 - quantized_idx))
+        # import pdb; pdb.set_trace()
+
+        # if regions == 0:
+        #     regions = image[0].shape[0] * image[0].shape[1]
+        # print regions
+        return max([regions, regions_inverted])
+    else:
+        return 0
 
 
 def histogram(image):
@@ -230,16 +260,75 @@ def histogram(image):
 
 def histogram_diff(hist1, hist2):
     # import pdb; pdb.set_trace()
-    return sum([
-        np.sum(np.abs(pair[0][0] - pair[1][0]))
+    # hist_len = len(hist1[0][0])
+    # dist_matrix = np.ones(hist_len * hist_len).reshape((hist_len, hist_len))
+    # h1 = hist1[0][0]
+    # h2 = hist2[0][0]
+
+    # h1 = np.dstack((
+    #     hist1[0][0],
+    #     hist1[1][0],
+    #     hist1[2][0],
+    #     xrange(255)
+    # ))[0].astype(np.float32)
+
+    # h2 = np.dstack((
+    #     hist2[0][0],
+    #     hist2[1][0],
+    #     hist2[2][0],
+    #     xrange(255)
+    # ))[0].astype(np.float32)
+
+    # result = cv.CalcEMD2(
+    #     cv.fromarray(h1),
+    #     cv.fromarray(h2),
+    #     cv.CV_DIST_L1
+    # )
+
+    result = sum([
+        cv.CalcEMD2(
+            cv.fromarray(
+                np.dstack((
+                    pair[0][0],
+                    xrange(len(pair[0][0]))
+                ))[0].astype(np.float32)
+            ),
+            cv.fromarray(
+                np.dstack((
+                    pair[1][0],
+                    xrange(len(pair[1][0]))
+                ))[0].astype(np.float32)
+            ),
+            cv.CV_DIST_L1
+        )
         for pair in zip(hist1, hist2)
     ])
+
+    # import pdb; pdb.set_trace()
+    # print result
+    return result
+
+
+    # return sum([
+    #     # np.sum(np.abs(pair[0][0] - pair[1][0]))
+    #     # emd(
+    #     #     pair[0][0].astype(np.float),
+    #     #     pair[1][0].astype(np.float),
+    #     #     dist_matrix.astype(np.float)
+    #     # )
+    #     cv.CalcEMD2(
+    #         cv.fromarray(pair[0][0].astype(np.uint16)),
+    #         cv.fromarray(pair[1][0].astype(np.uint16)),
+    #         cv.CV_DIST_L1
+    #     )
+    #     for pair in zip(hist1, hist2)
+    # ])
 
 
 def ideal_histogram(image, ttb_ratio):
     total = image[0].shape[0] * image[0].shape[1]
     # Not an error here, np.histogram leaves out one element
-    pixels = np.zeros(255).astype(np.uint32)
+    pixels = np.zeros(255)#.astype(np.uint32)
     pixels[0] = total * ttb_ratio        # Black text pixels
     pixels[254] = total * (1.0 - ttb_ratio)  # White background pixels
     bins = np.array(xrange(256))
@@ -247,5 +336,16 @@ def ideal_histogram(image, ttb_ratio):
 
 
 def max_histogram_diff(image):
-    total_pixels = image[0].shape[0] * image[0].shape[1]
-    return total_pixels * 2 * len(image)
+    # total_pixels = image[0].shape[0] * image[0].shape[1]
+    # pixels1 = np.zeros(255)
+    # pixels2 = np.zeros(255)
+    # pixels1[0] = total_pixels
+    # pixels2[254] = total_pixels
+    # bins = np.array(xrange(256))
+    # h1 = [(pixels1, bins)] * 3
+    # h2 = [(pixels2, bins)] * 3
+    # return histogram_diff(h1, h2)
+
+    # dafuq
+    # return total_pixels * 2
+    return 254.0 * 3
