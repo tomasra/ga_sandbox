@@ -1,5 +1,6 @@
 *.pyc
 *.txt
+!requirements.txt
 venv/
 data/
 samples/
