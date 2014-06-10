@@ -8,7 +8,7 @@ class Algorithm(object):
                  selection_strategy,
                  population_size=10,
                  mutation_rate=0.01,
-                 elitism_count=4):
+                 elitism_count=0):
         self._solution_factory = solution_factory
         self._crossover_strategy = crossover_strategy
         self._selection_strategy = selection_strategy
@@ -47,7 +47,8 @@ class Algorithm(object):
             else:
                 best_solutions = []
 
-            while len(new_chromos) < len(self._population):
+            count_needed = len(self._population) - self._elitism_count
+            while len(new_chromos) < count_needed:
                 chromo1 = self._selection_strategy.run(self.population)
                 chromo2 = self._selection_strategy.run(self.population)
                 chromo1, chromo2 = self._crossover_strategy.run(
