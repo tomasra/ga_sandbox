@@ -12,6 +12,7 @@ from imaging.filter_call import FilterCall
 
 # GA parameters
 FITNESS_THRESHOLD = 0.97
+MAX_ITERATIONS = 500
 POPULATION_SIZE = 300
 ELITISM_COUNT = 30
 CROSSOVER_RATE = 0.8
@@ -118,16 +119,18 @@ def run(
 
     print "Running GA..."
     best_fitness = 0
+    iteration_count = 0
     average_fitnesses, best_fitnesses = [], []
-    while best_fitness < fitness_threshold:
+    while best_fitness < fitness_threshold and iteration_count <= MAX_ITERATIONS:
         alg.run()
         s = "Avg fitness: " + str(alg.population.average_fitness)
         s += ", best fitness: " + str(alg.population.best_solution.fitness)
-        s += ", best solution: " + str(alg.population.best_solution)
+        # s += ", best solution: " + str(alg.population.best_solution)
         print s
         best_fitness = alg.population.best_solution.fitness
         average_fitnesses += [alg.population.average_fitness]
         best_fitnesses += [alg.population.best_solution.fitness]
+        iteration_count += 1
 
     best_solution = alg.population.best_solution.sequence
 
