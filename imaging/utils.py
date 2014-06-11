@@ -45,7 +45,9 @@ def render_image(image):
         # Combine all channels into one image with third dimension
         rgb = [plane.astype(np.uint8) for plane in image]
         combined_image = np.dstack(tuple(rgb + [alpha]))
-        plt.imshow(combined_image)
+        fig = plt.imshow(combined_image)
+        fig.axes.get_xaxis().set_visible(False)
+        fig.axes.get_yaxis().set_visible(False)
         plt.show()
     else:
         raise ValueError("Invalid image data")
