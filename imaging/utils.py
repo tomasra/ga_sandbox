@@ -28,7 +28,7 @@ def read_image(filepath):
     return rgb
 
 
-def render_image(image):
+def render_image(image, filename=None):
     """
     Image - list of three numpy arrays (color planes)
     """
@@ -45,10 +45,20 @@ def render_image(image):
         # Combine all channels into one image with third dimension
         rgb = [plane.astype(np.uint8) for plane in image]
         combined_image = np.dstack(tuple(rgb + [alpha]))
-        fig = plt.imshow(combined_image)
-        fig.axes.get_xaxis().set_visible(False)
-        fig.axes.get_yaxis().set_visible(False)
-        plt.show()
+        # fig = plt.figure(figsize=(width/100, height/100), dpi=100)
+        fig = plt.figure()
+        plt.imshow(combined_image)
+        ax = plt.Axes(fig, [0., 0., 1., 1.])
+        ax.set_axis_off()
+        fig.add_axes(ax)
+        # import pdb; pdb.set_trace()
+        # fig.axes[0].set_visible(False)
+        # fig.axes.get_xaxis().set_visible(False)
+        # fig.axes.get_yaxis().set_visible(False)
+        if filename:
+            plt.savefig(filename)
+        else:
+            plt.show()
     else:
         raise ValueError("Invalid image data")
 
