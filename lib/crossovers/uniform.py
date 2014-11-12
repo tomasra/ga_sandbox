@@ -1,2 +1,0 @@
-class UniformCrossover(object):
-    pass

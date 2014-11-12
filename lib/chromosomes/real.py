@@ -1,2 +1,0 @@
-class RealChromosome(object):
-    pass
