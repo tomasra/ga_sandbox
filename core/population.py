@@ -92,5 +92,5 @@ class Population(object):
             return [
                 # Chromosome by index of each best solution
                 self._chromosomes[self._solutions.index(s)]
-                for s in self._best_solutions(count)
+                for s in self.best_solutions(count)
             ]

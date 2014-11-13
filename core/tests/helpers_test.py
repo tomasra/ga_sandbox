@@ -1,4 +1,4 @@
-from lib.helpers import Helpers
+from core.helpers import Helpers
 import unittest
 
 

@@ -1,6 +1,6 @@
 import unittest
-from lib.solution import Solution, SolutionFactory
-from lib.population import Population
+from core.solution import Solution, SolutionFactory
+from core.population import Population
 
 
 class PopulationTest(unittest.TestCase):

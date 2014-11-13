@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-import imaging.filters as flt
+import projects.denoising.imaging.filters as flt
 
 
 class FiltersTests(unittest.TestCase):

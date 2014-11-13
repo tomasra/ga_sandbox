@@ -114,9 +114,9 @@ def algebraic_sum(img1, img2):
         return np.subtract(
             np.add(img1, img2),
             np.divide(
-                np.multiply(img1, img2),
+                np.multiply(img1, img2).astype(np.float32),
                 255
-            )
+            ).round()
         )
     else:
         raise ValueError("Image size or dtype mismatch")
@@ -128,9 +128,9 @@ def algebraic_product(img1, img2):
     """
     if img1.shape == img2.shape and img1.dtype == img2.dtype:
         return np.divide(
-            np.multiply(img1, img2),
+            np.multiply(img1, img2).astype(np.float32),
             255
-        )
+        ).round()
     else:
         raise ValueError("Image size or dtype mismatch")
 

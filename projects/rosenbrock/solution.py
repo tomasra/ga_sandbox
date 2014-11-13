@@ -1,3 +1,4 @@
+import numpy as np
 from core.solution import Solution, SolutionFactory
 from core.chromosomes import BinaryChromosome
 
@@ -69,7 +70,8 @@ class RosenbrockSolution(Solution):
         return "{0:b}".format(int(res))
 
     def _binary_to_real(self, value, min_val, max_val):
-        import pdb; pdb.set_trace()
+        if isinstance(value, np.ndarray):
+            value = ''.join([str(c) for c in value])
         value = float(int(value, 2))
         scale_top = 2 ** RosenbrockSolution.VAR_LENGTH
         res = (value * (max_val - min_val)) / scale_top + min_val

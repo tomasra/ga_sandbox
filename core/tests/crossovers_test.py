@@ -1,7 +1,7 @@
 import unittest
 from mock import patch
-from lib.crossovers.one_point import OnePointCrossover
-from lib.chromosomes.binary import BinaryChromosome
+from core.crossovers import OnePointCrossover
+from core.chromosomes import BinaryChromosome
 
 
 class OnePointCrossoverTest(unittest.TestCase):

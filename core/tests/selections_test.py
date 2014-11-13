@@ -1,6 +1,6 @@
 import unittest
 from mock import MagicMock, patch
-from lib.selections.roulette_wheel import RouletteWheelSelection
+from core.selections import RouletteWheelSelection
 
 
 class RouletteWheelSelectionTests(unittest.TestCase):

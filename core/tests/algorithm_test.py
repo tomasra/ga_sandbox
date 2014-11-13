@@ -1,9 +1,9 @@
 import unittest
-from lib.chromosome import Chromosome
-from lib.algorithm import Algorithm
-from lib.crossover import Crossover
-from lib.selection import Selection
-from lib.solution import Solution, SolutionFactory
+from core.chromosomes import Chromosome
+from core.algorithm import Algorithm
+from core.crossovers import Crossover
+from core.selections import Selection
+from core.solution import Solution, SolutionFactory
 
 
 class AlgorithmTests(unittest.TestCase):
@@ -36,7 +36,7 @@ class AlgorithmTests(unittest.TestCase):
 
         self.assertEquals(selection.call_count, 6)
         self.assertEquals(crossover.call_count, 3)
-        self.assertEquals(_FakeChromosome.mutation_count, 5)
+        self.assertEquals(_FakeChromosome.mutation_count, 6)
 
     def test_multiple_generations(self):
         """
@@ -66,7 +66,7 @@ class AlgorithmTests(unittest.TestCase):
             self.assertEquals(chromo.content, "10101010")
 
         self.assertEquals(selection.call_count, 18)
-        self.assertEquals(crossover.call_count, 6)
+        self.assertEquals(crossover.call_count, 9)
         self.assertEquals(_FakeChromosome.mutation_count, 18)
 
 

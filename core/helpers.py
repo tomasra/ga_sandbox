@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 
 class Helpers(object):
@@ -22,6 +23,9 @@ class Helpers(object):
         Converts binary string to integer or returns none if binary is Invalid
         """
         try:
+            # In case a binary numpy array gets passed
+            if isinstance(binary, np.ndarray):
+                binary = ''.join([str(char) for char in binary])
             return int(binary, 2)
         except ValueError:
             return None

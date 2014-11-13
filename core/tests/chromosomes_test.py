@@ -1,6 +1,6 @@
 import unittest
 from mock import patch
-from lib.chromosomes.binary import BinaryChromosome
+from core.chromosomes import BinaryChromosome
 
 
 class BinaryChromosomeTests(unittest.TestCase):
@@ -9,8 +9,8 @@ class BinaryChromosomeTests(unittest.TestCase):
         Binary chromosome - generate random string of specified length
         """
         chromo = BinaryChromosome(20)
-        zeros_count = len([c for c in chromo if c == "0"])
-        ones_count = len([c for c in chromo if c == "1"])
+        zeros_count = len([c for c in chromo if c == 0])
+        ones_count = len([c for c in chromo if c == 1])
         self.assertEqual(len(chromo), 20)
         # Should have both ones and zeros
         self.assertNotEqual(zeros_count, 0)

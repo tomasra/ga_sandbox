@@ -1,6 +1,6 @@
 import unittest
-from lib.chromosomes.binary import BinaryChromosome
-from lib.solutions.arithmetic_expression import ArithExpSolution
+from core.chromosomes import BinaryChromosome
+from projects.arithmetics.solution import ArithExpSolution
 
 
 class ArithExpSolutionTests(unittest.TestCase):
