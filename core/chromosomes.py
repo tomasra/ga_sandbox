@@ -1,198 +1,150 @@
 # -*- coding: utf-8 -*-
-#!/usr/bin.python
-
-import random
 import numpy as np
+import copy
 from abc import ABCMeta, abstractmethod
 
 
 class Chromosome(object):
     """
-        Abstract base class for all types of chromosomes
+        Abstract base class for all types of chromosomes.
+        Instances are considered immutable and all operations
+        (mutate, split, concat) return new chromosomes.
     """
-
     __metaclass__ = ABCMeta
 
-    def __init__(self, length=None, content=None):
-        """
-        Initializes chromosome as random bit string of specified length.
-        """
-        if content is not None:
-            self.content = content
-        elif length:
-            self.content = self._get_random(length)
-        else:
-            raise ValueError(
-                "Must supply either chromosome length or initial content")
+    # Set randomizer to specific instance if necessary
+    # This helps to unit test the code dealing with random data.
+    _randomizer = np.random.RandomState()
 
-    @property
-    def content(self):
-        return self._content
+    def __init__(self, content):
+        self._content = content
 
-    @content.setter
-    def content(self, value):
-        self._content = value
-
-    @abstractmethod
-    def _get_random(self, length):
-        """
-        Randomizes chromosome content.
-        """
-        pass
-
-    @abstractmethod
     def mutate(self, rate):
         """
-        Mutates single item with given probability
+        Mutate each chromosome gene with specified probability
+        and return a new chromosome
         """
-        pass
+        new_chromosome = self[:]
+        for index, gene in enumerate(new_chromosome):
+            # Draw a random number from [0, 1)
+            do_mutation = self._randomizer.random_sample() < rate
+            if do_mutation:
+                new_chromosome._content[index] = self._mutate_gene(gene, index)
 
-    @abstractmethod
-    def split(self, point):
-        """
-        Splits chromosome in two at the specified point
-        """
-        pass
+        return new_chromosome
 
-    @abstractmethod
+    def split(self, split_point):
+        """
+        Splits chromosome in two at the specified index.
+        Used in crossover.
+        """
+        # Multiple points?
+        if isinstance(split_point, list):
+            if len(split_point) == 2:
+                chromo1 = self[:split_point[0]]
+                chromo2 = self[split_point[0]:split_point[1]]
+                chromo3 = self[split_point[1]:]
+                return chromo1, chromo2, chromo3
+            else:
+                # More complex case
+                raise NotImplementedError
+        else:
+            chromo1 = self[:split_point]
+            chromo2 = self[split_point:]
+            return chromo1, chromo2
+
     def concat(self, other):
         """
-        Concatenates this chromosome with another
+        Concatenates this chromosome with another.
+        Used in crossover.
+        """
+        new_chromosome = copy.deepcopy(self)
+        new_chromosome._content = self._concat_genes(other)
+        return new_chromosome
+
+    @abstractmethod
+    def _mutate_gene(self, gene, index):
+        """
+        Mutate single gene - leave this to implementations
         """
         pass
 
+    @abstractmethod
+    def _concat_genes(self, gene, index):
+        """
+        Concatenate genetic content
+        """
+        pass
+
+    def pick_split_point(self):
+        """
+        Random point over the whole chromosome length
+        """
+        index = self._randomizer.random_integers(
+            0, len(self) - 1, 1)
+        return index
+
+    # Redirect to content
+    def __eq__(self, other):
+        return self._content == other._content
+
     def __len__(self):
-        return len(self.content)
+        return self._content.__len__()
 
     def __iter__(self):
-        for i in range(0, len(self.content)):
-            yield self.content[i]
+        return self._content.__iter__()
 
     def __getitem__(self, key):
-        """
-        Returns chromosome value by specified index or slice.
-        """
-        return self.content[key]
-
-    def __setitem__(self, index, value):
-        """
-        Sets a single item by index
-        """
-        self.content[index] = value
+        if isinstance(key, slice):
+            # Return a chromosome
+            new_chromosome = copy.deepcopy(self)
+            new_chromosome._content = self._content.__getitem__(key)
+            return new_chromosome
+        else:
+            # Return one gene
+            return self._content.__getitem__(key)
 
 
 class IntegerChromosome(Chromosome):
-    def __init__(
-            self,
-            min_val,
-            max_val,
-            length=None,
-            content=None):
+    def __init__(self, min_val, max_val, initial_length):
+        # Numpy array of random numbers from specified interval
+        super(IntegerChromosome, self).__init__(
+            self._randomizer.random_integers(
+                min_val, max_val, initial_length))
         self.min_val = min_val
         self.max_val = max_val
-        super(IntegerChromosome, self).__init__(length, content)
 
-    def mutate(self, rate):
+    def _mutate_gene(self, gene, index):
         """
-        Replaces integer with another random integer
-        from current interval.
+        Random integer from specified interval
         """
-        for i in xrange(len(self)):
-            do_mutation = random.random() < rate
-            if do_mutation:
-                new_value = np.random.random_integers(
-                    self.min_val,
-                    self.max_val,
-                    1
-                )
-                self.content[i] = new_value
+        return self._randomizer.random_integers(
+            self.min_val, self.max_val, 1)
 
-    def split(self, point):
+    def _concat_genes(self, other):
         """
-        Splits chromsome in two
+        Concatenate both numpy arrays
         """
-        part1 = self.content[:point]
-        part2 = self.content[point:]
-        chromo1 = IntegerChromosome(self.min_val, self.max_val, content=part1)
-        chromo2 = IntegerChromosome(self.min_val, self.max_val, content=part2)
-        return chromo1, chromo2
-
-    def concat(self, other):
-        """
-        Concatenates two chromosomes
-        """
-        new_content = np.concatenate((self.content, other.content))
-        return IntegerChromosome(
-            self.min_val,
-            self.max_val,
-            content=new_content
-        )
-
-    def _get_random(self, length):
-        """
-        Sequence of random integers in [min_val, max_val] interval
-        """
-        return np.random.random_integers(
-            self.min_val,
-            self.max_val,
-            length
-        )
+        return np.concatenate((self[:], other[:]))
 
 
 class BinaryChromosome(Chromosome):
-    def __init__(self, length=None, content=None):
-        """
-        For convenience: if content is passed as string,
-        convert it to numpy array
-        """
-        if isinstance(content, str):
-            converted_content = np.array([
-                int(char)
-                for char in content
-            ])
-        else:
-            converted_content = content
-        super(BinaryChromosome, self).__init__(length, converted_content)
+    def __init__(self, initial_length):
+        # Numpy array of bits
+        super(BinaryChromosome, self).__init__(
+            self._randomizer.randint(2, size=initial_length))
 
-    def mutate(self, rate):
+    def _mutate_gene(self, gene, index):
         """
-        Tries to flip each bit with a given probability
+        Flip numpy array bit
         """
-        for i in xrange(len(self)):
-            do_mutation = random.random() < rate
-            if do_mutation:
-                self._flip_bit(i)
+        return 1 - gene
 
-    def split(self, point):
+    def _concat_genes(self, other):
         """
-        Splits content (numpy array) in two
+        Concatenate both numpy arrays
         """
-        part1 = self.content[:point]
-        part2 = self.content[point:]
-        chromo1 = BinaryChromosome(content=part1)
-        chromo2 = BinaryChromosome(content=part2)
-        return chromo1, chromo2
+        return np.concatenate((self[:], other[:]))
 
-    def concat(self, other):
-        """
-        Concatenates two chromosomes
-        """
-        new_content = np.concatenate((
-            self.content,
-            other.content
-        ))
-        return BinaryChromosome(content=new_content)
-
-    def _get_random(self, length):
-        return np.random.randint(2, size=length)
-
-    def _flip_bit(self, index):
-        if self[index] == 0:
-            self[index] = 1
-        elif self[index] == 1:
-            self[index] = 0
-        return self
-
-
-class RealChromosome(object):
-    pass
+    def __repr__(self):
+        return ''.join(str(int(c)) for c in self)

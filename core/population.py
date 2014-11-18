@@ -1,96 +1,60 @@
 class Population(object):
-    def __init__(self,
-                 solution_factory,
-                 population_size=None,
-                 chromosomes=[],
-                 solutions=[]):
-        self._solution_factory = solution_factory
-        if population_size:
-            # Initialize with random chromosomes
-            self._population_size = population_size
-            self._chromosomes = [
-                self._solution_factory.create().initialize_chromosome()
-                for i in xrange(0, self._population_size)
-            ]
-            self._solutions = [
-                self._solution_factory.create().decode(chromo)
-                for chromo in self._chromosomes
-            ]
-        elif not chromosomes and not solutions:
-            raise ValueError((
-                "Must supply either population size ",
-                "or initial chromosomes/solutions"
-            ))
+    def __init__(self, phenotype, size=0):
+        # Class of concrete individual
+        self.phenotype = phenotype
 
-        if chromosomes:
-            # Initialize with raw chromosomes and decode to make solutions
-            self._chromosomes = chromosomes
-            self._solutions = [
-                self._solution_factory.create().decode(chromo)
-                for chromo in self._chromosomes
-            ]
-
-        if solutions:
-            # Add pre-decoded solutions
-            # Works good with elitism, because the elite solutions already have
-            # their fitness computed, so no need to recreate them from
-            # chromosomes
-            self._solutions += solutions
-            self._chromosomes += [
-                solution.encode()
-                for solution in solutions
-            ]
-
-        # Calculate and store various properties now
-        self._best_solution = max(self.solutions, key=lambda s: s.fitness)
-        self._total_fitness = sum([
-            solution.fitness
-            for solution in self.solutions
-        ])
-        self._average_fitness = self.total_fitness / len(self)
+        # Initialize with new random individuals
+        self._individuals = [
+            phenotype()
+            for _ in xrange(size)
+        ]
 
     def __len__(self):
-        return len(self._chromosomes)
+        return self._individuals.__len__()
 
-    @property
-    def chromosomes(self):
-        """
-        Encoded chromosome list
-        """
-        return self._chromosomes
+    def __iter__(self):
+        return self._individuals.__iter__()
 
-    @property
-    def solutions(self):
-        """
-        Decoded chromosome list - solutions.
-        """
-        return self._solutions
+    def __getitem__(self, key):
+        return self._individuals.__getitem__(key)
 
-    @property
-    def best_solution(self):
-        return self._best_solution
+    def __setitem__(self, index, value):
+        return self._individuals.__setitem__(index, value)
+
+    def __iadd__(self, individual):
+        # Add either single individual or a list
+        if isinstance(individual, list):
+            self._individuals += individual
+        else:
+            self._individuals.append(individual)
+        return self
 
     @property
     def total_fitness(self):
-        return self._total_fitness
+        return sum([
+            individual.fitness
+            for individual in self
+        ])
 
     @property
     def average_fitness(self):
-        return self._average_fitness
+        return self.total_fitness / len(self)
 
-    def best_solutions(self, count):
-        # Specified number of solutions with highest fitness
+    @property
+    def best_individual(self):
+        try:
+            return self.best_individuals(1)[0]
+        except:
+            return None
+
+    def best_individuals(self, count=None):
+        """
+        Specified number of solutions with highest fitness
+        """
+        if not isinstance(count, int):
+            # Return all individuals, sorted by fitness in descending order
+            count = len(self)
         return sorted(
-            self._solutions,
-            key=lambda s: s.fitness,
+            self,
+            key=lambda individual: individual.fitness,
             reverse=True)[:count]
-
-    def best_chromosomes(self, count):
-        if count > len(self):
-            raise ValueError("Count is higher than total number of chromosomes")
-        else:
-            return [
-                # Chromosome by index of each best solution
-                self._chromosomes[self._solutions.index(s)]
-                for s in self.best_solutions(count)
-            ]

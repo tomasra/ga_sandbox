@@ -1,6 +1,17 @@
 import unittest
-from mock import MagicMock, patch
-from core.selections import RouletteWheelSelection
+from mock import Mock, MagicMock, patch
+from core.selections import RouletteWheelSelection, TournamentSelection
+
+
+class _FakePopulation(list):
+    phenotype = Mock
+
+    def best_individuals(self):
+        return self
+
+    @property
+    def total_fitness(self):
+        return sum([chromo.fitness for chromo in self])
 
 
 class RouletteWheelSelectionTests(unittest.TestCase):
@@ -8,30 +19,50 @@ class RouletteWheelSelectionTests(unittest.TestCase):
         """
         Roulette wheel selection - pick one chromosome
         """
-        # Fake population
-        chromo1, chromo2, chromo3 = "10101010", "11110000", "00001111"
-        (sol1, sol2, sol3) = [MagicMock() for _ in xrange(3)]
-        sol1.fitness = 0.1  # probability: 1/15
-        sol2.fitness = 1.0  # probability: 10/15
-        sol3.fitness = 0.4  # probability: 4/15
-
-        population = MagicMock()
-        population.chromosomes = [chromo1, chromo2, chromo3]
-        population.solutions = [sol1, sol2, sol3]
-        population.total_fitness = sol1.fitness + sol2.fitness + sol3.fitness
-
+        population = _FakePopulation()
+        population += [
+            Mock(fitness=0.1),  # probability: 1/15
+            Mock(fitness=1.0),  # probability: 10/15
+            Mock(fitness=0.4),  # probability: 4/15
+        ]
         selection = RouletteWheelSelection()
 
-        # pick 1st
-        with patch('random.random', return_value=0.01):
-            # picked = alg.pick_chromosome()
-            picked = selection.run(population)
-            self.assertEquals(picked, chromo1)
-        # pick 2nd
-        with patch('random.random', return_value=0.5):
-            picked = selection.run(population)
-            self.assertEquals(picked, chromo2)
-        # pick 3rd
-        with patch('random.random', return_value=0.9):
-            picked = selection.run(population)
-            self.assertEquals(picked, chromo3)
+        # Pick 1st
+        selection._randomizer = Mock(
+            random_sample=Mock(return_value=0.01))
+        self.assertEquals(selection.run(population), population[0])
+
+        # Pick 2nd
+        selection._randomizer = Mock(
+            random_sample=Mock(return_value=0.5))
+        self.assertEquals(selection.run(population), population[1])
+
+        # Pick 3rd
+        selection._randomizer = Mock(
+            random_sample=Mock(return_value=0.9))
+        self.assertEquals(selection.run(population), population[2])
+
+
+class TournamentSelectionTests(unittest.TestCase):
+    def test_selection(self):
+        """
+        Tournament selection - run
+        """
+        # Fake population with 4 chromosomes
+        population = _FakePopulation()
+        population += [
+            Mock(fitness=0.1),
+            Mock(fitness=0.2),
+            Mock(fitness=0.3),
+            Mock(fitness=0.4),
+        ]
+
+        selection = TournamentSelection(size=2)
+        # Let's say randomizer would pick 1st and 3rd chromos
+        fake_rand = Mock()
+        fake_rand.random_integers.side_effect = [0, 2]
+        selection._randomizer = fake_rand
+
+        # Selection should return the third chromosome
+        self.assertEqual(
+            selection.run(population).fitness, 0.3)
