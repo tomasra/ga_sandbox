@@ -1,10 +1,12 @@
+#! /home/tomas/.virtualenvs/ga/bin/python
 import numpy as np
 from core.individual import Individual
 from core.algorithm import Algorithm
-from core.selections import RouletteWheelSelection
+# from core.selections import RouletteWheelSelection
 from core.selections import TournamentSelection
 from core.crossovers import OnePointCrossover
 from core.chromosomes import BinaryChromosome
+from core.parallelizer import Parallelizer
 
 
 class BitStringSolution(Individual):
@@ -14,7 +16,7 @@ class BitStringSolution(Individual):
     """
     TARGET = np.array([
         int(c)
-        for c in "1111000000000000000000000000000000000000000000000000000000001111"
+        for c in "111100000000000000000000000000000000000000000000000000001111"
     ])
     LENGTH = len(TARGET)
 
@@ -33,19 +35,22 @@ class BitStringSolution(Individual):
         return BinaryChromosome(self.LENGTH)
 
 
-alg = Algorithm(
-    BitStringSolution,
-    OnePointCrossover(0.8),
-    # RouletteWheelSelection(),
-    TournamentSelection(5),
-    population_size=50,
-    mutation_rate=0.015,
-    elitism_count=1)
+with Parallelizer() as parallelizer:
+    if parallelizer.proc_id == 0:
+        alg = Algorithm(
+            BitStringSolution,
+            OnePointCrossover(0.8),
+            # RouletteWheelSelection(),
+            TournamentSelection(5),
+            population_size=50,
+            mutation_rate=0.015,
+            elitism_count=1,
+            parallelizer=parallelizer)
 
-for population, generation in alg.run():
-    best_fitness = int(population.best_individual.fitness)
-    print "Generation ", generation, best_fitness
-    # Solution found
-    if best_fitness == BitStringSolution.LENGTH:
-        print population.best_individual.solution
-        break
+        for population, generation in alg.run():
+            best_fitness = int(population.best_individual.fitness)
+            print "Generation ", generation, best_fitness
+            # Solution found
+            if best_fitness == BitStringSolution.LENGTH:
+                print population.best_individual.solution
+                break

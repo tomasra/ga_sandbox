@@ -9,7 +9,8 @@ class Algorithm(object):
                  selection,
                  population_size=10,
                  mutation_rate=0.01,
-                 elitism_count=0):
+                 elitism_count=0,
+                 parallelizer=None):
         # Classes
         self.phenotype = phenotype
 
@@ -22,13 +23,19 @@ class Algorithm(object):
         self._crossover = crossover
         self._selection = selection
 
+        # Etc
+        self._parallelizer = parallelizer
+
     @property
     def population(self):
         return self._population
 
     def _next_population(self):
         # Start with an empty population
-        new_population = Population(self.phenotype, 0)
+        new_population = Population(
+            self.phenotype,
+            size=0,
+            parallelizer=self._parallelizer)
 
         # Pick best individuals from previous population if necessary
         new_population += self.population.best_individuals(
@@ -65,7 +72,10 @@ class Algorithm(object):
                 "Generation count must be positive, non-zero integer")
 
         # Initial random population for generation-0:
-        self._population = Population(self.phenotype, self.population_size)
+        self._population = Population(
+            self.phenotype,
+            self.population_size,
+            parallelizer=self._parallelizer)
 
         # Run specified amount of iterations
         if generations:

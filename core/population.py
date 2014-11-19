@@ -1,13 +1,25 @@
 class Population(object):
-    def __init__(self, phenotype, size=0):
+    def __init__(self, phenotype, size=0, parallelizer=None):
         # Class of concrete individual
         self.phenotype = phenotype
 
         # Initialize with new random individuals
-        self._individuals = [
-            phenotype()
-            for _ in xrange(size)
-        ]
+        # Distribute chromosome creation/fitness calculation to workers
+        self.parallelizer = parallelizer
+
+        if self.parallelizer is not None:
+            # Start parallel tasks
+            for _ in xrange(size):
+                self.parallelizer.create_task(lambda: phenotype())
+            self.parallelizer.start_tasks()
+
+            # Collect individuals created in parallel
+            self._individuals = self.parallelizer.finish_tasks()
+        else:
+            self._individuals = [
+                phenotype()
+                for _ in xrange(size)
+            ]
 
     def __len__(self):
         return self._individuals.__len__()
