@@ -57,6 +57,7 @@ class Algorithm(object):
 
             new_population += [offspring1, offspring2]
 
+        new_population.calculate_fitness()
         return new_population
 
     def run(self, generations=None):
@@ -76,6 +77,7 @@ class Algorithm(object):
             self.phenotype,
             self.population_size,
             parallelizer=self._parallelizer)
+        self._population.calculate_fitness()
 
         # Run specified amount of iterations
         if generations:

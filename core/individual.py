@@ -10,6 +10,7 @@ class Individual(object):
             self.chromosome = chromosome
         else:
             self.chromosome = self._initialize_chromosome()
+        self._fitness = None
 
     @property
     def chromosome(self):
@@ -21,8 +22,7 @@ class Individual(object):
         # Refresh individual traits on chromosome update
         if self.chromosome is not None:
             self._decode(self.chromosome)
-            self._fitness = self._calculate_fitness()
-        else:
+            # Reset fitness
             self._fitness = None
 
     def mutate(self, *args, **kwargs):
@@ -34,13 +34,11 @@ class Individual(object):
 
     @property
     def fitness(self):
-        """
-        Returns individual fitness value.
-        Only needs to be recalculated when individual traits change,
-        and they should only change when the chromosome changes.
-        See chromosome setter.
-        """
         return self._fitness
+
+    @fitness.setter
+    def fitness(self, value):
+        self._fitness = value
 
     @abstractmethod
     def _decode(self, chromosome):

@@ -7,6 +7,7 @@ from core.selections import TournamentSelection
 from core.crossovers import OnePointCrossover
 from core.chromosomes import BinaryChromosome
 from core.parallelizer import Parallelizer
+import time
 
 
 class BitStringSolution(Individual):
@@ -29,6 +30,8 @@ class BitStringSolution(Individual):
         for pair in zip(self.solution, self.TARGET):
             if pair[0] == pair[1]:
                 fitness += 1
+        # for i in xrange(100000):
+        #     i * i
         return float(fitness)
 
     def _initialize_chromosome(self):
@@ -36,7 +39,9 @@ class BitStringSolution(Individual):
 
 
 with Parallelizer() as parallelizer:
-    if parallelizer.proc_id == 0:
+    if parallelizer.master_process:
+        start = time.time()
+
         alg = Algorithm(
             BitStringSolution,
             OnePointCrossover(0.8),
@@ -54,3 +59,6 @@ with Parallelizer() as parallelizer:
             if best_fitness == BitStringSolution.LENGTH:
                 print population.best_individual.solution
                 break
+
+        end = time.time()
+        print end - start

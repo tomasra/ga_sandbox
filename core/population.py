@@ -7,19 +7,10 @@ class Population(object):
         # Distribute chromosome creation/fitness calculation to workers
         self.parallelizer = parallelizer
 
-        if self.parallelizer is not None:
-            # Start parallel tasks
-            for _ in xrange(size):
-                self.parallelizer.create_task(lambda: phenotype())
-            self.parallelizer.start_tasks()
-
-            # Collect individuals created in parallel
-            self._individuals = self.parallelizer.finish_tasks()
-        else:
-            self._individuals = [
-                phenotype()
-                for _ in xrange(size)
-            ]
+        self._individuals = [
+            phenotype()
+            for _ in xrange(size)
+        ]
 
     def __len__(self):
         return self._individuals.__len__()
@@ -41,12 +32,22 @@ class Population(object):
             self._individuals.append(individual)
         return self
 
+    def calculate_fitness(self):
+        """
+        Calculate individual fitness values in parallel
+        """
+        # Distribute
+        for task_id, individual in enumerate(self):
+            self.parallelizer.start_task(
+                task_id, lambda: individual._calculate_fitness())
+
+        # Collect and assign calculated fitness values for each individual
+        for task_id, task_result in self.parallelizer.finished_tasks():
+            self[task_id].fitness = task_result
+
     @property
     def total_fitness(self):
-        return sum([
-            individual.fitness
-            for individual in self
-        ])
+        return sum([individual.fitness for individual in self])
 
     @property
     def average_fitness(self):
