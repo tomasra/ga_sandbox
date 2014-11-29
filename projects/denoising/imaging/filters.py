@@ -5,21 +5,52 @@ import scipy.ndimage.filters as sf
 import scipy.ndimage.morphology as sm
 
 
+one_argument_filters = []
+two_argument_filters = []
+other_filters = []
+all_filters = one_argument_filters + two_argument_filters + other_filters
+
+
+def filter(decorated_function):
+    """
+    Very simple decorator to mark functions
+    which work as image filters
+    """
+    global one_argument_filters
+    global two_argument_filters
+    global other_filters
+
+    # Determine argument count of the function
+    argcount = decorated_function.func_code.co_argcount
+    if argcount == 1:
+        one_argument_filters.append(decorated_function)
+    elif argcount == 2:
+        two_argument_filters.append(decorated_function)
+    else:
+        other_filters.append(decorated_function)
+    # Function is unchanged
+    return decorated_function
+
+
 # Single argument filters
+@filter
 def mean(img):
     result = fr.mean(img, fm.square(3))
     return result
 
 
+@filter
 def minimum(img):
     result = sf.minimum_filter(img, size=3)
     return result
 
 
+@filter
 def maximum(img):
     return sf.maximum_filter(img, size=3)
 
 
+@filter
 def vsobel(img):
     result = sf.sobel(img.astype(np.int16), axis=1)
     # With normalization
@@ -29,6 +60,7 @@ def vsobel(img):
     return result
 
 
+@filter
 def hsobel(img):
     # With normalization
     result = np.add(
@@ -41,6 +73,7 @@ def hsobel(img):
     return result
 
 
+@filter
 def sobel(img):
     img_int16 = img.astype(np.int16)
     result = np.add(
@@ -56,11 +89,13 @@ def sobel(img):
     return result
 
 
+@filter
 def lightedge(img):
     result = inversion(darkedge(img))
     return result
 
 
+@filter
 def darkedge(img):
     result = sf.laplace(img.astype(np.int16))
     result /= 4
@@ -69,23 +104,26 @@ def darkedge(img):
     return result
 
 
+@filter
 def erosion(img):
     result = sm.grey_erosion(img, size=(3, 3))
     return result
 
 
+@filter
 def dilation(img):
     result = sm.grey_dilation(img, size=(3, 3))
     return result
 
 
+@filter
 def inversion(img):
     result = np.subtract(255, img)
     return result
 
 
 # Two-argument filters
-
+@filter
 def logical_sum(img1, img2):
     """
     Maximum of two color planes
@@ -96,6 +134,7 @@ def logical_sum(img1, img2):
         raise ValueError("Image size or dtype mismatch")
 
 
+@filter
 def logical_product(img1, img2):
     """
     Minimum of two color planes
@@ -106,6 +145,7 @@ def logical_product(img1, img2):
         raise ValueError("Image size or dtype mismatch")
 
 
+@filter
 def algebraic_sum(img1, img2):
     """
     Sum of two color planes - product / 255
@@ -122,6 +162,7 @@ def algebraic_sum(img1, img2):
         raise ValueError("Image size or dtype mismatch")
 
 
+@filter
 def algebraic_product(img1, img2):
     """
     Product of two color planes / 255
@@ -135,6 +176,7 @@ def algebraic_product(img1, img2):
         raise ValueError("Image size or dtype mismatch")
 
 
+@filter
 def bounded_sum(img1, img2):
     """
     g = sum of two color planes
@@ -148,6 +190,7 @@ def bounded_sum(img1, img2):
         raise ValueError("Image size or dtype mismatch")
 
 
+@filter
 def bounded_product(img1, img2):
     """
     g = product of two color planes - 255

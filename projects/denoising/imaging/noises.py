@@ -1,65 +1,32 @@
 import numpy as np
 import random as rnd
+from projects.denoising.imaging.image import Image
 
 
 def salt_and_pepper(image, probability):
-    if isinstance(image, list):
-        return [
-            salt_and_pepper(color_plane, probability)
-            for color_plane in image
-        ]
-    else:
-        # Add salt and pepper
-        new_image = np.empty_like(image)
-        new_image[:] = image
-        for i in xrange(0, image.shape[0]):
-            for j in xrange(0, image.shape[1]):
+    new_image = Image(image.copy())
+    for idx_channel, channel in enumerate(new_image.channels):
+        for idx_row, row in enumerate(channel):
+            for idx_col, col in enumerate(row):
                 if rnd.random() < probability:
                     # Make the noise here
                     # either white or black pixel
                     bit = rnd.randint(0, 1)
-                    new_image[i][j] = 255 * bit
-        return new_image
-
-
-def salt_and_pepper_all(images, probability):
-    """
-    Salt and pepper noise for all images
-    """
-    return [
-        salt_and_pepper(image, probability)
-        for image in images
-    ]
+                    new_image[idx_row, idx_col, idx_channel] = 255 * bit
+    return new_image
 
 
 def gaussian(image, mu=0.0, sigma=10.0):
-    if isinstance(image, list):
-        return [
-            gaussian(color_plane, mu, sigma)
-            for color_plane in image
-        ]
-    else:
-        # Add gaussian noise
-        new_image = np.empty_like(image)
-        new_image[:] = image
-        for i in xrange(0, image.shape[0]):
-            for j in xrange(0, image.shape[1]):
-                point = image[i][j] + rnd.gauss(mu, sigma)
+    new_image = Image(image.copy())
+    for idx_channel, channel in enumerate(new_image.channels):
+        for idx_row, row in enumerate(channel):
+            for idx_col, point in enumerate(row):
+                new_point = point + rnd.gauss(mu, sigma)
                 # Pixel value should be in [0; 255] interval
-                if point > 255:
-                    new_image[i][j] = 255
+                if new_point > 255:
+                    new_point = 255
                 elif point < 0:
-                    new_image[i][j] = 0
-                else:
-                    new_image[i][j] = point
-        return new_image
+                    new_point = 0
+                new_image[idx_row, idx_col, idx_channel] = new_point
 
-
-def gaussian_all(images, mu=0.0, sigma=10.0):
-    """
-    Gaussian noise for all images
-    """
-    return [
-        gaussian(image, mu, sigma)
-        for image in images
-    ]
+    return new_image

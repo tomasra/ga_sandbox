@@ -1,8 +1,11 @@
 import os
 import random as rnd
 import numpy as np
-from utils import binarize
-from PIL import Image, ImageDraw, ImageFont
+from projects.denoising.imaging.analysis import binarize
+# from PIL import Image, ImageDraw, ImageFont
+import PIL
+from PIL import ImageFont, ImageDraw
+from projects.denoising.imaging.image import Image
 
 
 class CharDrawer(object):
@@ -43,33 +46,30 @@ class CharDrawer(object):
         Generates a pair of black/white and colored
         charater images
         """
-        char_blacknwhite = self._create_character(
+        bw_image = self._create_character(
             character,
             text_color=(0, 0, 0),
             bg_color=(255, 255, 255))
-        char_color = self._create_character(
+        color_image = self._create_character(
             character,
             text_color=self.text_color,
             bg_color=self.bg_color)
 
-        bw_image = self._image_to_numpy(char_blacknwhite)
+        # color_image = self._image_to_numpy(char_color)
+        # bw_image = self._image_to_numpy(char_blacknwhite)
         bw_image = binarize(bw_image)
-        color_image = self._image_to_numpy(char_color)
 
-        return (
-            bw_image,
-            color_image
-        )
+        return (bw_image, color_image)
 
     def _create_character(self, character, text_color, bg_color):
         """
-        Return character as Pillow Image object
+        Return image of a single character
         """
-        image = Image.new(
+        pil_image = PIL.Image.new(
             'RGB',
             (self.image_size, self.image_size),
             bg_color)
-        draw = ImageDraw.Draw(image)
+        draw = PIL.ImageDraw.Draw(pil_image)
         position = (self.image_size - self.char_size) / 2
         draw.text(
             (position, position),
@@ -77,18 +77,34 @@ class CharDrawer(object):
             # fill=(0, 0, 0),
             fill=text_color,
             font=self.font)
+
+        # Convert to custom image format (numpy array)
+        image = Image(np.array(pil_image))
         return image
 
     @staticmethod
-    def _image_to_numpy(image):
+    def create_colored_char(character, text_color, bg_color):
         """
-        Converts Pillow Image object to numpy array list (RGB)
+        Clear color image of specified character
         """
-        np_data = np.asarray(image, dtype=np.uint8)
-        return [
-            np_data[:, :, i]
-            for i in xrange(np_data.shape[2])
-        ]
+        char_drawer = CharDrawer(
+            text_color=text_color,
+            bg_color=bg_color
+        )
+        pair = char_drawer.create_pair(character)
+        return pair[1]
+
+    @staticmethod
+    def create_binary_char(character):
+        """
+        Black and white image of specified character
+        """
+        char_drawer = CharDrawer(
+            text_color=(0, 0, 0),
+            bg_color=(255, 255, 255)
+        )
+        pair = char_drawer.create_pair(character)
+        return pair[0]
 
     @staticmethod
     def create_mosaic(images, width, height, borders=True):
