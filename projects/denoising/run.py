@@ -30,46 +30,46 @@ SNP_NOISE_PARAM = 0.15
 GAUSSIAN_NOISE_SIGMA = 40.0
 
 
-def get_clear_char(character):
-    """
-    Clear color image of specified character
-    """
-    char_drawer = CharDrawer(
-        text_color=TEXT_COLOR,
-        bg_color=BACKGROUND_COLOR
-    )
-    pair = char_drawer.create_pair(character)
-    return pair[1]
+# def get_clear_char(character):
+#     """
+#     Clear color image of specified character
+#     """
+#     char_drawer = CharDrawer(
+#         text_color=TEXT_COLOR,
+#         bg_color=BACKGROUND_COLOR
+#     )
+#     pair = char_drawer.create_pair(character)
+#     return pair[1]
 
 
-def get_binary_char(character):
-    """
-    Black and white image of specified character
-    """
-    char_drawer = CharDrawer(
-        text_color=TEXT_COLOR,
-        bg_color=BACKGROUND_COLOR
-    )
-    pair = char_drawer.create_pair(character)
-    return pair[0]
+# def get_binary_char(character):
+#     """
+#     Black and white image of specified character
+#     """
+#     char_drawer = CharDrawer(
+#         text_color=TEXT_COLOR,
+#         bg_color=BACKGROUND_COLOR
+#     )
+#     pair = char_drawer.create_pair(character)
+#     return pair[0]
 
 
-def get_snp_noise_char(character, intensity=SNP_NOISE_PARAM):
-    """
-    Returns color character image with salt and pepper noise
-    """
-    clear_char = get_clear_char(character)
-    noisified = noises.salt_and_pepper(clear_char, intensity)
-    return noisified
+# def get_snp_noise_char(character, intensity=SNP_NOISE_PARAM):
+#     """
+#     Returns color character image with salt and pepper noise
+#     """
+#     clear_char = get_clear_char(character)
+#     noisified = noises.salt_and_pepper(clear_char, intensity)
+#     return noisified
 
 
-def get_gaussian_noise_char(character, sigma=GAUSSIAN_NOISE_SIGMA):
-    """
-    Returns color character image with gaussian noise
-    """
-    clear_char = get_clear_char(character)
-    noisified = noises.gaussian(clear_char, sigma=sigma)
-    return noisified
+# def get_gaussian_noise_char(character, sigma=GAUSSIAN_NOISE_SIGMA):
+#     """
+#     Returns color character image with gaussian noise
+#     """
+#     clear_char = get_clear_char(character)
+#     noisified = noises.gaussian(clear_char, sigma=sigma)
+#     return noisified
 
 
 def apply_filters(image, filter_sequence):
