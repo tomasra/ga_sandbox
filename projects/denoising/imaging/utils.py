@@ -31,37 +31,17 @@ def read_image(filepath):
 
 def render_image(image, filename=None):
     """
-    Image - list of three numpy arrays (color planes)
+    Render Image instance on screen or into file
     """
-    if isinstance(image, np.ndarray):
-        full_image = [image, image, image]
-        # import pdb; pdb.set_trace()
-        # render_image([image, image, image])
-        render_image(full_image)
-    elif isinstance(image, list) and len(image) == 3:
-        height, width = image[0].shape[0], image[0].shape[1]
-        # Alpha channel plane with all 255's
-        alpha = np.empty_like(image[0])
-        alpha.fill(255)
-        # Combine all channels into one image with third dimension
-        rgb = [plane.astype(np.uint8) for plane in image]
-        combined_image = np.dstack(tuple(rgb + [alpha]))
-        # fig = plt.figure(figsize=(width/100, height/100), dpi=100)
-        fig = plt.figure()
-        plt.imshow(combined_image)
-        ax = plt.Axes(fig, [0., 0., 1., 1.])
-        ax.set_axis_off()
-        fig.add_axes(ax)
-        # import pdb; pdb.set_trace()
-        # fig.axes[0].set_visible(False)
-        # fig.axes.get_xaxis().set_visible(False)
-        # fig.axes.get_yaxis().set_visible(False)
-        if filename:
-            plt.savefig(filename)
-        else:
-            plt.show()
+    fig = plt.figure()
+    plt.imshow(image)
+    ax = plt.Axes(fig, [0., 0., 1., 1.])
+    ax.set_axis_off()
+    fig.add_axes(ax)
+    if filename:
+        plt.savefig(filename)
     else:
-        raise ValueError("Invalid image data")
+        plt.show()
 
 
 def render_grayscale(image):

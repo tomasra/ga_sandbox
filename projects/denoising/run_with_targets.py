@@ -51,6 +51,8 @@ phenotype = FilterSequence(
 
 with Parallelizer() as parallelizer:
     if parallelizer.master_process:
+        solution = None
+
         # Start GA
         algorithm = Algorithm(
             phenotype=phenotype,
@@ -61,7 +63,14 @@ with Parallelizer() as parallelizer:
             elitism_count=ELITISM_COUNT,
             parallelizer=parallelizer)
 
-        for population, generation in algorithm.run(5):
+        for population, generation in algorithm.run():
             best = population.best_individual.fitness
             average = population.average_fitness
+            solution = population.best_individual
             print best, average
+            if best > FITNESS_THRESHOLD:
+                break
+
+        # Sufficiently good solution found
+        filtered_image = source_image.run_filters(solution)
+        render_image(filtered_image)

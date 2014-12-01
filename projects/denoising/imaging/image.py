@@ -1,6 +1,8 @@
+import copy
 import numpy as np
 from scipy import ndimage
 from pyemd import emd
+from projects.denoising.imaging.utils import render_image
 
 
 class Image(np.ndarray):
@@ -15,16 +17,17 @@ class Image(np.ndarray):
             shape_3d = tuple(list(instance.shape) + [1])
             instance = instance.reshape(shape_3d)
 
-        instance._channels = _Channels(instance)
-        # Histogram must be created after channels!
-        instance._histogram = Histogram(instance)
         return instance
 
     def __array_finalize__(self, obj):
         if obj is None:
             return
-        self._channels = getattr(obj, '_channels', None)
-        self._histogram = getattr(obj, '_histogram', None)
+        # HACK!
+        # Histogram creation needs channels, but iterating them creates new 
+        # arrays and calls this __array_finalize__, thus causing infinite
+        # recursion. Workaround here is to create channels from raw np.array
+        self.channels = _Channels(self.view(np.ndarray))
+        self.histogram = Histogram(self)
 
     @staticmethod
     def from_channels(channels):
@@ -54,17 +57,24 @@ class Image(np.ndarray):
     @property
     def histogram(self):
         return self._histogram
+    @histogram.setter
+    def histogram(self, value):
+        self._histogram = value
 
     @property
     def channels(self):
         return self._channels
+    @channels.setter
+    def channels(self, value):
+        self._channels = value
+    
 
     def run_filters(self, filter_calls):
         """
         Run a sequence of filters on current image
-        and return new image
+        and return a new image
         """
-        image = self
+        image = copy.deepcopy(self)
         for filter_call in filter_calls:
             image = filter_call(image)
         return image
@@ -184,7 +194,16 @@ class _Channels(object):
     in images (3D array, i.e. 50x50x3) or histograms (2D array: 256x3)
     """
     def __init__(self, data, for_histogram=False):
-        self._data = data
+        # See data setter
+        self.data = data
+
+    @property
+    def data(self):
+        return self._data
+
+    @data.setter
+    def data(self, value):
+        self._data = value
         # Should be three dimensions for usual images
         self._dimensions = len(self._data.shape)
         self._channel_count = self._data.shape[self._dimensions - 1]
@@ -193,13 +212,7 @@ class _Channels(object):
         shape = list(self._data.shape)
         shape.pop()
         self._shape_no_channel = tuple(shape)
-
-        # # Special case for images with only one channel
-        # # represented as 2D array
-        # if for_histogram is False and self._dimensions == 2:
-        #     self._channel_count = 1
-        #     self._shape_no_channel = self._data.shape
-
+    
     def __len__(self):
         return self._channel_count
 

@@ -42,19 +42,9 @@ class FilterCall(object):
             return new_image
 
     def __repr__(self):
-        return self.name + ': '
-        + str(self.src_channel_indexes) + ' -> '
-        + str(self.dest_channel_index)
-
-    # @staticmethod
-    # def run_sequence(image, filter_list):
-    #     """
-    #     Runs filter sequence on provided image
-    #     """
-    #     filtered_image = image
-    #     for flt in filter_list:
-    #         filtered_image = flt(filtered_image)
-    #     return filtered_image
+        return self.name + ': ' +\
+            str(self.src_channel_indexes) + ' -> ' +\
+            str(self.dest_channel_index)
 
     @staticmethod
     def all(channel_count=3):
