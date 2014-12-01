@@ -10,7 +10,7 @@ class _FilterSequence(Individual):
     """
     Common code for any filter sequence phenotype
     """
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         # Decoded chromosome data
         self.filter_sequence = None
 
@@ -18,7 +18,7 @@ class _FilterSequence(Individual):
         self.filter_calls = FilterCall.all(
             len(self.source_image.channels))
 
-        super(_FilterSequence, self).__init__()
+        super(_FilterSequence, self).__init__(*args, **kwargs)
 
     def __iter__(self):
         return self.filter_sequence.__iter__()
@@ -61,14 +61,14 @@ class _FilterSequenceUnknownTarget(_FilterSequence):
     HISTOGRAM_WEIGHT = 0.5
     REGION_WEIGHT = 0.5
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         # Target is a black/white histogram, instead of specific image
         self.target_histogram = Histogram.binary(
             self.source_image.pixels, self.IDEAL_HIST_BW_RATIO)
         # Maximum possible histogram difference for current image size
         self.max_histogram_diff = Histogram.max_diff(
             self.source_image.pixels)
-        super(_FilterSequenceUnknownTarget, self).__init__()
+        super(_FilterSequenceUnknownTarget, self).__init__(*args, **kwargs)
 
     def _calculate_fitness(self):
         """
@@ -104,8 +104,8 @@ class _FilterSequenceKnownTarget(_FilterSequence):
     : source_image - initial nosified image
     : target_image - corresponding ideal binary image
     """
-    def __init__(self):
-        super(_FilterSequenceKnownTarget, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(_FilterSequenceKnownTarget, self).__init__(*args, **kwargs)
 
     def _calculate_fitness(self):
         """
