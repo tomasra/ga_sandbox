@@ -4,7 +4,7 @@ from core.algorithm import Algorithm
 from core.chromosomes import IntegerChromosome
 from core.crossovers import OnePointCrossover
 from core.selections import RouletteWheelSelection
-from core.parallelizer import Parallelizer
+from core.parallelizer import Parallelizer, parallel_task
 from projects.denoising.solution import FilterSequence
 from projects.denoising.imaging.utils import render_image
 from projects.denoising.imaging.char_drawer import CharDrawer
@@ -49,6 +49,12 @@ phenotype = FilterSequence(
     source_image=source_image,
     target_image=target_image)
 
+@parallel_task
+def calculate_fitness(chromosome):
+    individual = phenotype()
+    individual.chromosome = chromosome
+    return individual._calculate_fitness()
+
 with Parallelizer() as parallelizer:
     if parallelizer.master_process:
         solution = None
@@ -63,7 +69,7 @@ with Parallelizer() as parallelizer:
             elitism_count=ELITISM_COUNT,
             parallelizer=parallelizer)
 
-        for population, generation in algorithm.run():
+        for population, generation in algorithm.run(10):
             best = population.best_individual.fitness
             average = population.average_fitness
             solution = population.best_individual

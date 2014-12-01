@@ -36,10 +36,17 @@ class Population(object):
         """
         Calculate individual fitness values in parallel
         """
-        # Distribute
+        # Distribute: individual index as task ID
         for task_id, individual in enumerate(self):
-            self.parallelizer.start_task(
-                task_id, lambda: individual._calculate_fitness())
+            # This is quite inefficient in this case:
+            # self.parallelizer.start_task(
+            #     task_id, lambda: individual._calculate_fitness())
+
+            # So use this:
+            self.parallelizer.start_prepared_task(
+                task_id, 'calculate_fitness',
+                # Arbitrary number of parameters
+                individual.chromosome)
 
         # Collect and assign calculated fitness values for each individual
         for task_id, task_result in self.parallelizer.finished_tasks():
@@ -47,17 +54,26 @@ class Population(object):
 
     @property
     def total_fitness(self):
+        """
+        Total fitness
+        """
         return sum([individual.fitness for individual in self])
 
     @property
     def average_fitness(self):
+        """
+        Average fitness
+        """
         return self.total_fitness / len(self)
 
     @property
     def best_individual(self):
+        """
+        Individual with the highest fitness
+        """
         try:
             return self.best_individuals(1)[0]
-        except:
+        except IndexError:
             return None
 
     def best_individuals(self, count=None):

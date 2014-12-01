@@ -12,9 +12,23 @@ _PROFILE_EXTENSION = '.txt'
 MASTER_PROC_ID = 0
 
 # Messages
-TAG_TASK_START = 1000
-TAG_TASK_COMPLETE = 1001
-TAG_TERMINATE = 1002
+TAG_START_TASK = 1000
+TAG_START_PREPARED_TASK = 1001
+TAG_TASK_COMPLETE = 1100
+TAG_TERMINATE = 1200
+
+
+PREPARED_TASKS = {}
+def parallel_task(decorated_function):
+    """
+    Simple decorator to mark tasks to be run by workers
+    """
+    name = decorated_function.__name__
+    if name in PREPARED_TASKS:
+        raise ValueError("Parallel task with such name already exists")
+    else:
+        PREPARED_TASKS[name] = decorated_function
+        return decorated_function
 
 
 class Parallelizer(object):
@@ -70,25 +84,51 @@ class Parallelizer(object):
     def master_process(self):
         return self.proc_id == MASTER_PROC_ID
 
-    def start_task(self, task_id, task):
+    def _get_available_worker_id(self):
         """
-        Send task to the first available worker
+        Return ID of the first available worker
         or wait until one becomes available.
         """
-        if self.master_process:
-            if not self._available_workers:
-                # All workers currently busy,
-                # need to wait for notification from receiver process
-                worker_id = self._wait_for_worker()
-            else:
-                worker_id = self._available_workers.pop()
+        if not self._available_workers:
+            # All workers currently busy,
+            # need to wait for notification from receiver process
+            worker_id = self._wait_for_worker()
+        else:
+            worker_id = self._available_workers.pop()
+        return worker_id
 
-            # Send task to this worker
+    def start_task(self, task_id, task):
+        """
+        Send a callable task (lambda) .
+        """
+        payload = (
+            task_id,
+            pickle.dumps(task, pickle.HIGHEST_PROTOCOL),
+        )
+        self.comm.send(
+            payload,
+            dest=self._get_available_worker_id(),
+            tag=TAG_START_TASK)
+        self._task_semaphore += 1
+
+    def start_prepared_task(self, task_id, task_name, *args, **kwargs):
+        """
+        Invoke a predefined task on receiver side with passed arguments.
+        """
+        if task_name in PREPARED_TASKS:
+            payload = (
+                task_id,
+                task_name,
+                pickle.dumps(args, pickle.HIGHEST_PROTOCOL),
+                pickle.dumps(kwargs, pickle.HIGHEST_PROTOCOL),
+            )
             self.comm.send(
-                (task_id, Parallelizer._serialize_task(task)),
-                dest=worker_id,
-                tag=TAG_TASK_START)
+                payload,
+                dest=self._get_available_worker_id(),
+                tag=TAG_START_PREPARED_TASK)
             self._task_semaphore += 1
+        else:
+            raise ValueError("Prepared task with such name was not found")
 
     def finished_tasks(self):
         """
@@ -153,17 +193,30 @@ class Parallelizer(object):
                 tag=MPI.ANY_TAG,
                 status=status)
 
-            if status.tag == TAG_TASK_START:
+            if status.tag == TAG_START_TASK:
                 # Unpack task info
                 task_id, task = message
-                task = Parallelizer._deserialize_task(task)
+                task = pickle.loads(task)
                 # Run the task and send results to master
                 result = task()
+                payload = (task_id, result)
                 self.comm.send(
-                    (task_id, result),
-                    dest=MASTER_PROC_ID,
-                    tag=TAG_TASK_COMPLETE)
-                # Start over
+                    payload,
+                    dest=MASTER_PROC_ID, tag=TAG_TASK_COMPLETE)
+
+            elif status.tag == TAG_START_PREPARED_TASK:
+                # Unpack all task info and get the task itself
+                task_id, task_name, args, kwargs = message
+                args = pickle.loads(args)
+                kwargs = pickle.loads(kwargs)
+
+                # Run the task and send results back
+                task = PREPARED_TASKS[task_name]
+                result = task(*args, **kwargs)
+                payload = (task_id, result)
+                self.comm.send(
+                    payload,
+                    dest=MASTER_PROC_ID, tag=TAG_TASK_COMPLETE)
 
             elif status.tag == TAG_TERMINATE:
                 # Exit loop
@@ -171,26 +224,6 @@ class Parallelizer(object):
             else:
                 raise RuntimeError(
                     "Worker: invalid command")
-
-    @staticmethod
-    def _serialize_task(task):
-        # serialized = (
-        #     marshal.dumps(task.func_code),
-        #     pickle.dumps(task.func_closure)
-        # )
-        serialized = pickle.dumps(task, pickle.HIGHEST_PROTOCOL)
-        return serialized
-
-    @staticmethod
-    def _deserialize_task(message):
-        # func_code = marshal.loads(message[0])
-        # func_closure = pickle.loads(message[1])
-        # deserialized = types.FunctionType(
-        #     func_code,
-        #     globals(),
-        #     closure=func_closure)
-        deserialized = pickle.loads(message)
-        return deserialized
 
 
 class _NullParallelizer(object):
@@ -218,6 +251,14 @@ class _NullParallelizer(object):
         Run the task and save results
         """
         self._task_results[task_id] = task()
+        return self
+
+    def start_prepared_task(self, task_id, task_name, *args, **kwargs):
+        """
+        Do the same
+        """
+        task = PREPARED_TASKS[task_name]
+        self._task_results[task_id] = task(*args, **kwargs)
         return self
 
     def finished_tasks(self):
