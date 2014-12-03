@@ -19,6 +19,8 @@ TAG_TERMINATE = 1200
 
 
 PREPARED_TASKS = {}
+
+
 def parallel_task(decorated_function):
     """
     Simple decorator to mark tasks to be run by workers

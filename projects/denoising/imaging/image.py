@@ -2,7 +2,6 @@ import copy
 import numpy as np
 from scipy import ndimage
 from pyemd import emd
-from projects.denoising.imaging.utils import render_image
 
 
 class Image(np.ndarray):
@@ -23,7 +22,7 @@ class Image(np.ndarray):
         if obj is None:
             return
         # HACK!
-        # Histogram creation needs channels, but iterating them creates new 
+        # Histogram creation needs channels, but iterating them creates new
         # arrays and calls this __array_finalize__, thus causing infinite
         # recursion. Workaround here is to create channels from raw np.array
         self.channels = _Channels(self.view(np.ndarray))
@@ -57,6 +56,7 @@ class Image(np.ndarray):
     @property
     def histogram(self):
         return self._histogram
+
     @histogram.setter
     def histogram(self, value):
         self._histogram = value
@@ -64,10 +64,10 @@ class Image(np.ndarray):
     @property
     def channels(self):
         return self._channels
+
     @channels.setter
     def channels(self, value):
         self._channels = value
-    
 
     def run_filters(self, filter_calls):
         """
@@ -86,7 +86,8 @@ class Image(np.ndarray):
         """
         return np.sum(
             np.absolute(
-                self.astype(np.int16) - other.astype(np.int16)
+                self.view(np.ndarray).astype(np.int16) -
+                other.view(np.ndarray).astype(np.int16)
             )
         )
 
@@ -212,7 +213,7 @@ class _Channels(object):
         shape = list(self._data.shape)
         shape.pop()
         self._shape_no_channel = tuple(shape)
-    
+
     def __len__(self):
         return self._channel_count
 

@@ -52,19 +52,21 @@ class Population(object):
         for task_id, task_result in self.parallelizer.finished_tasks():
             self[task_id].fitness = task_result
 
+        # Calculate these properties once
+        self._total_fitness = sum([individual.fitness for individual in self])
+        self._average_fitness = self._total_fitness / len(self)
+        self._best_individuals = sorted(
+            self,
+            key=lambda individual: individual.fitness,
+            reverse=True)
+
     @property
     def total_fitness(self):
-        """
-        Total fitness
-        """
-        return sum([individual.fitness for individual in self])
+        return self._total_fitness
 
     @property
     def average_fitness(self):
-        """
-        Average fitness
-        """
-        return self.total_fitness / len(self)
+        return self._average_fitness
 
     @property
     def best_individual(self):
@@ -80,10 +82,7 @@ class Population(object):
         """
         Specified number of solutions with highest fitness
         """
-        if not isinstance(count, int):
-            # Return all individuals, sorted by fitness in descending order
-            count = len(self)
-        return sorted(
-            self,
-            key=lambda individual: individual.fitness,
-            reverse=True)[:count]
+        if count is None:
+            return self._best_individuals
+        else:
+            return self._best_individuals[:count]

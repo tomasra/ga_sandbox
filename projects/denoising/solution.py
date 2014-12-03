@@ -10,13 +10,18 @@ class _FilterSequence(Individual):
     """
     Common code for any filter sequence phenotype
     """
+    filter_calls = []
+
     def __init__(self, *args, **kwargs):
         # Decoded chromosome data
         self.filter_sequence = None
 
-        # All available filter calls according to image channel count
-        self.filter_calls = FilterCall.all(
-            len(self.source_image.channels))
+        # All available filter calls according to image channel count.
+        # Only necessary to populate this once.
+        # TODO: non ideal workaround, fix this.
+        if not _FilterSequence.filter_calls:
+            _FilterSequence.filter_calls = FilterCall.all(
+                len(self.source_image.channels))
 
         super(_FilterSequence, self).__init__(*args, **kwargs)
 

@@ -82,6 +82,13 @@ def quantize(image, colors=2, return_colors=False):
         image.width * image.height,
         len(image.channels)
     ))
+    # TODO: The following line raises a numpy warning:
+        # numpy/lib/shape_base.py:430: FutureWarning:
+        # in the future np.array_split will retain the shape
+        #  of arrays with a zero size, instead of replacing them
+        #  by `array([])`, which always has a shape of (0,).
+        # FutureWarning)
+
     centroids, _ = vq.kmeans(pixels, colors)
     quantized, _ = vq.vq(pixels, centroids)
     # Convert back to 2D image

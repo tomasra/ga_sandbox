@@ -127,6 +127,18 @@ class IntegerChromosome(Chromosome):
         """
         return np.concatenate((self[:], other[:]))
 
+    def __deepcopy__(self, memo):
+        """
+        Trying to make cloning of these chromosomes faster.
+        """
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        result.min_val = self.min_val
+        result.max_val = self.max_val
+        result._content = self._content.copy()
+        return result
+
 
 class BinaryChromosome(Chromosome):
     def __init__(self, initial_length):
