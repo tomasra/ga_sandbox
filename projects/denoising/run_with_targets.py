@@ -73,9 +73,11 @@ with Parallelizer(prepared_tasks) as parallelizer:
 
         for population, generation in algorithm.run():
             best = population.best_individual.fitness
+            worst = population.worst_individual.fitness
             average = population.average_fitness
             solution = population.best_individual
-            print "#%i | best: %f, avg: %f" % (generation, best, average)
+            print "#%i | best: %f, worst: %f, avg: %f" % (
+                generation, best, worst, average)
             if best > FITNESS_THRESHOLD:
                 print "Solution found in %i iterations" % generation
                 break
@@ -127,9 +129,11 @@ with Parallelizer(prepared_tasks) as parallelizer:
 
         for population, generation in algorithm.run():
             best = population.best_individual.fitness
+            worst = population.worst_individual.fitness
             average = population.average_fitness
             solution = population.best_individual
-            print "#%i | best: %f, avg: %f" % (generation, best, average)
+            print "#%i | best: %f, worst: %f, avg: %f" % (
+                generation, best, worst, average)
             if best > FITNESS_THRESHOLD:
                 print "Solution found in %i iterations" % generation
                 break

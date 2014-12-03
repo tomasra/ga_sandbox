@@ -96,3 +96,13 @@ class Population(object):
             return self._best_individuals
         else:
             return self._best_individuals[:count]
+
+    @property
+    def worst_individual(self):
+        """
+        Individual with lowest fitness
+        """
+        try:
+            return self.best_individuals()[-1]
+        except IndexError:
+            return None
