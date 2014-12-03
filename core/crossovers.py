@@ -45,7 +45,7 @@ class Crossover(object):
         return offspring1, offspring2
 
     @abstractmethod
-    def _run_specific(self, parent1, parent2):
+    def _run_specific(self, chromo1, chromo2):
         pass
 
 
@@ -53,13 +53,13 @@ class OnePointCrossover(Crossover):
     def __init__(self, *args, **kwargs):
         super(OnePointCrossover, self).__init__(*args, **kwargs)
 
-    def _run_specific(self, parent1, parent2):
-        point = parent1.pick_split_point()
+    def _run_specific(self, chromo1, chromo2):
+        point = chromo1.pick_split_point()
         # Split each parent into two parts at the same point
-        parent1_part1, parent1_part2 = parent1.split(point)
-        parent2_part1, parent2_part2 = parent2.split(point)
-        offspring1 = parent1_part1.concat(parent2_part2)
-        offspring2 = parent2_part1.concat(parent1_part2)
+        chromo1_part1, chromo1_part2 = chromo1.split(point)
+        chromo2_part1, chromo2_part2 = chromo2.split(point)
+        offspring1 = chromo1_part1.concat(chromo2_part2)
+        offspring2 = chromo2_part1.concat(chromo1_part2)
         return offspring1, offspring2
 
 
@@ -67,22 +67,22 @@ class TwoPointCrossover(Crossover):
     def __init__(self, *args, **kwargs):
         super(TwoPointCrossover, self).__init__(*args, **kwargs)
 
-    def _run_specific(self, parent1, parent2):
-        point1 = parent1.pick_split_point()
-        point2 = parent1.pick_split_point()
+    def _run_specific(self, chromo1, chromo2):
+        point1 = chromo1.pick_split_point()
+        point2 = chromo1.pick_split_point()
         points = sorted([point1, point2])
 
         # Split each parent into three parts:
-        # parent1: | 1111 | 1111 | 1111 |
-        # parent2: | 2222 | 2222 | 2222 |
-        parent1_1, parent1_2, parent1_3 = parent1.split(points)
-        parent2_1, parent2_2, parent2_3 = parent2.split(points)
+        # chromo1: | 1111 | 1111 | 1111 |
+        # chromo2: | 2222 | 2222 | 2222 |
+        chromo1_1, chromo1_2, chromo1_3 = chromo1.split(points)
+        chromo2_1, chromo2_2, chromo2_3 = chromo2.split(points)
 
         # Now recombine them:
         # offspring1: | 1111 | 2222 | 1111 |
         # offspring2: | 2222 | 1111 | 2222 |
-        offspring1 = parent1_1.concat(parent2_2).concat(parent1_3)
-        offspring2 = parent2_1.concat(parent1_2).concat(parent2_3)
+        offspring1 = chromo1_1.concat(chromo2_2).concat(chromo1_3)
+        offspring2 = chromo2_1.concat(chromo1_2).concat(chromo2_3)
         return offspring1, offspring2
 
 

@@ -42,15 +42,15 @@ class TournamentSelection(Selection):
         self.tournament_size = size
 
     def run(self, population):
-        # Create new special population
-        tournament_population = Population(
-            population.phenotype, 0)
+        tournament_population = []
 
         # Pick several individuals randomly
         for _ in xrange(self.tournament_size):
             random_index = self._randomizer.random_integers(
                 0, len(population) - 1)
-            tournament_population += population[random_index]
+            tournament_population.append(population[random_index])
 
         # And the winner is...
-        return tournament_population.best_individual
+        best_individual = max(
+            tournament_population, key=lambda a: a.fitness)
+        return best_individual

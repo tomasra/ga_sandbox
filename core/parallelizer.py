@@ -58,7 +58,7 @@ class Parallelizer(object):
         # (master and worker)
         if self.proc_count < 2:
             # Fallback
-            return _NullParallelizer(self.proc_id)
+            return NullParallelizer()
         else:
             if self.master_process:
                 # Prepare for incoming tasks
@@ -246,14 +246,14 @@ class Parallelizer(object):
                     "Worker: invalid command")
 
 
-class _NullParallelizer(object):
+class NullParallelizer(Parallelizer):
     """
     Fake parallelizer for such cases when
     not enough processes are available and tasks have to be run
     in usual serial way.
     """
-    def __init__(self, proc_id):
-        self.proc_id = proc_id
+    def __init__(self, *args, **kwargs):
+        super(NullParallelizer, self).__init__(*args, **kwargs)
         self._task_results = {}
 
     def __enter__(self):
@@ -264,7 +264,7 @@ class _NullParallelizer(object):
 
     @property
     def master_process(self):
-        return self.proc_id == MASTER_PROC_ID
+        return True
 
     def start_task(self, task_id, task):
         """

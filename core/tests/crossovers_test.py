@@ -10,6 +10,11 @@ class CrossoverTest(unittest.TestCase):
             # Crossover happened!
             raise Warning
 
+    class _FakeIndividual(object):
+        def __init__(self, chromosome, fitness=0.5):
+            self.chromosome = chromosome
+            self.fitness = fitness
+
     def test_crossover_does_happen(self):
         """
         Crossover - happens
@@ -30,11 +35,11 @@ class CrossoverTest(unittest.TestCase):
         crossover = self._SpecificCrossover(0.5)
         crossover._randomizer = Mock()
         crossover._randomizer.random_sample.return_value = 0.9
-        parent1 = Mock(fitness=0.14)
-        parent2 = Mock(fitness=0.42)
+        parent1 = CrossoverTest._FakeIndividual(chromosome='aaa')
+        parent2 = CrossoverTest._FakeIndividual(chromosome='bbb')
         offspring1, offspring2 = crossover.run(parent1, parent2)
-        self.assertEquals(parent1.fitness, offspring1.fitness)
-        self.assertEquals(parent2.fitness, offspring2.fitness)
+        self.assertEquals(parent1.chromosome, 'aaa')
+        self.assertEquals(parent2.chromosome, 'bbb')
 
 
 class OnePointCrossoverTest(unittest.TestCase):

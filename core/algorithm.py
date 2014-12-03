@@ -25,6 +25,7 @@ class Algorithm(object):
 
         # Etc
         self._parallelizer = parallelizer
+        self._population = None
 
     @property
     def population(self):

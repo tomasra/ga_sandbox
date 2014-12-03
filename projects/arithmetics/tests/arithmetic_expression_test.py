@@ -3,6 +3,7 @@ from core.chromosomes import BinaryChromosome
 from projects.arithmetics.solution import ArithExpSolution
 
 
+@unittest.skip('')
 class ArithExpSolutionTests(unittest.TestCase):
     def test_encoding(self):
         """

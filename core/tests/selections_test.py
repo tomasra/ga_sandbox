@@ -14,6 +14,14 @@ class _FakePopulation(list):
         return sum([chromo.fitness for chromo in self])
 
 
+class _FakeIndividual(object):
+    def __init__(self, fitness):
+        self.fitness = fitness
+
+    def _calculate_fitness(self):
+        return self.fitness
+
+
 class RouletteWheelSelectionTests(unittest.TestCase):
     def test_selection(self):
         """
@@ -21,9 +29,9 @@ class RouletteWheelSelectionTests(unittest.TestCase):
         """
         population = _FakePopulation()
         population += [
-            Mock(fitness=0.1),  # probability: 1/15
-            Mock(fitness=1.0),  # probability: 10/15
-            Mock(fitness=0.4),  # probability: 4/15
+            _FakeIndividual(fitness=0.1),  # probability: 1/15
+            _FakeIndividual(fitness=1.0),  # probability: 10/15
+            _FakeIndividual(fitness=0.4),  # probability: 4/15
         ]
         selection = RouletteWheelSelection()
 
@@ -51,10 +59,10 @@ class TournamentSelectionTests(unittest.TestCase):
         # Fake population with 4 chromosomes
         population = _FakePopulation()
         population += [
-            Mock(fitness=0.1),
-            Mock(fitness=0.2),
-            Mock(fitness=0.3),
-            Mock(fitness=0.4),
+            _FakeIndividual(fitness=0.1),
+            _FakeIndividual(fitness=0.2),
+            _FakeIndividual(fitness=0.3),
+            _FakeIndividual(fitness=0.4),
         ]
 
         selection = TournamentSelection(size=2)
