@@ -30,14 +30,20 @@ def parallel_task(decorated_function):
         raise ValueError("Parallel task with such name already exists")
     else:
         PREPARED_TASKS[name] = decorated_function
-        return decorated_function
+    return decorated_function
 
 
 class Parallelizer(object):
-    def __init__(self):
+    def __init__(self, prepared_tasks=None):
         self.comm = MPI.COMM_WORLD
         self.proc_count = self.comm.Get_size()
         self.proc_id = self.comm.Get_rank()
+
+        self.prepared_tasks = {}
+        if prepared_tasks is not None:
+            for task in prepared_tasks:
+                task_name = task.__name__
+                self.prepared_tasks[task_name] = task
 
     def __enter__(self):
         """
@@ -82,6 +88,18 @@ class Parallelizer(object):
             self.profile.dump_stats(
                 _PROFILE_FILENAME + str(self.proc_id) + _PROFILE_EXTENSION)
 
+    def get_prepared_task(self, task_name):
+        """
+        Return function/parallel task with specified name
+        """
+        # Local prepared task dict has priority against global one
+        if task_name in self.prepared_tasks:
+            return self.prepared_tasks[task_name]
+        elif task_name in PREPARED_TASKS:
+            return PREPARED_TASKS[task_name]
+        else:
+            return None
+
     @property
     def master_process(self):
         return self.proc_id == MASTER_PROC_ID
@@ -117,7 +135,7 @@ class Parallelizer(object):
         """
         Invoke a predefined task on receiver side with passed arguments.
         """
-        if task_name in PREPARED_TASKS:
+        if self.get_prepared_task(task_name) is not None:
             payload = (
                 task_id,
                 task_name,
@@ -213,7 +231,7 @@ class Parallelizer(object):
                 kwargs = pickle.loads(kwargs)
 
                 # Run the task and send results back
-                task = PREPARED_TASKS[task_name]
+                task = self.get_prepared_task(task_name)
                 result = task(*args, **kwargs)
                 payload = (task_id, result)
                 self.comm.send(

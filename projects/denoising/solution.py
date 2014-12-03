@@ -3,7 +3,6 @@ from core.chromosomes import IntegerChromosome
 from projects.denoising.imaging.filter_call import FilterCall
 import projects.denoising.imaging.utils as iu
 from projects.denoising.imaging.image import Histogram
-from projects.denoising.imaging.analysis import connected_regions
 
 
 class _FilterSequence(Individual):

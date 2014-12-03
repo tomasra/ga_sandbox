@@ -49,14 +49,16 @@ phenotype = FilterSequence(
     source_image=source_image,
     target_image=target_image)
 
-@parallel_task
+
 def calculate_fitness(chromosome):
     individual = phenotype()
     individual.chromosome = chromosome
     return individual._calculate_fitness()
+prepared_tasks = [calculate_fitness]
 
-with Parallelizer() as parallelizer:
+with Parallelizer(prepared_tasks) as parallelizer:
     if parallelizer.master_process:
+        print "Starting GA..."
         solution = None
 
         # Start GA
@@ -69,14 +71,69 @@ with Parallelizer() as parallelizer:
             elitism_count=ELITISM_COUNT,
             parallelizer=parallelizer)
 
-        for population, generation in algorithm.run(10):
+        for population, generation in algorithm.run():
             best = population.best_individual.fitness
             average = population.average_fitness
             solution = population.best_individual
             print best, average
             if best > FITNESS_THRESHOLD:
+                print "Solution found in %i iterations" % generation
                 break
 
         # Sufficiently good solution found
         filtered_image = source_image.run_filters(solution)
-        render_image(filtered_image)
+        # render_image(filtered_image)
+
+#---------------------------------------------------
+# Gaussian noise
+# Known target image
+#---------------------------------------------------
+source_image = chars.create_colored_char(
+    'A', TEXT_COLOR, BACKGROUND_COLOR)
+
+# Add noise
+source_image = noises.salt_and_pepper(source_image, SNP_NOISE_PARAM)
+
+# Clean binary target image
+target_image = chars.create_binary_char('A')
+
+phenotype = FilterSequence(
+    sequence_length=CHROMOSOME_LENGTH,
+    source_image=source_image,
+    target_image=target_image)
+
+
+# Redefine this, because phenotype has changed
+def calculate_fitness(chromosome):
+    individual = phenotype()
+    individual.chromosome = chromosome
+    return individual._calculate_fitness()
+prepared_tasks = [calculate_fitness]
+
+with Parallelizer(prepared_tasks) as parallelizer:
+    if parallelizer.master_process:
+        print "Starting GA..."
+        solution = None
+
+        # Start GA
+        algorithm = Algorithm(
+            phenotype=phenotype,
+            crossover=OnePointCrossover(CROSSOVER_RATE),
+            selection=RouletteWheelSelection(),
+            population_size=POPULATION_SIZE,
+            mutation_rate=MUTATION_RATE,
+            elitism_count=ELITISM_COUNT,
+            parallelizer=parallelizer)
+
+        for population, generation in algorithm.run():
+            best = population.best_individual.fitness
+            average = population.average_fitness
+            solution = population.best_individual
+            print best, average
+            if best > FITNESS_THRESHOLD:
+                print "Solution found in %i iterations" % generation
+                break
+
+        # Sufficiently good solution found
+        filtered_image = source_image.run_filters(solution)
+        # render_image(filtered_image)
