@@ -1,4 +1,8 @@
-import pickle
+try:
+   import cPickle as pickle
+except:
+   import pickle
+
 import dill     # For function pickling
 from mpi4py import MPI
 import cProfile
@@ -58,7 +62,7 @@ class Parallelizer(object):
         # (master and worker)
         if self.proc_count < 2:
             # Fallback
-            return NullParallelizer()
+            return NullParallelizer(self.prepared_tasks.values())
         else:
             if self.master_process:
                 # Prepare for incoming tasks
@@ -136,11 +140,13 @@ class Parallelizer(object):
         Invoke a predefined task on receiver side with passed arguments.
         """
         if self.get_prepared_task(task_name) is not None:
+            pickled_args = pickle.dumps(args, pickle.HIGHEST_PROTOCOL)
+            pickled_kwargs = pickle.dumps(kwargs, pickle.HIGHEST_PROTOCOL)
             payload = (
                 task_id,
                 task_name,
-                pickle.dumps(args, pickle.HIGHEST_PROTOCOL),
-                pickle.dumps(kwargs, pickle.HIGHEST_PROTOCOL),
+                pickled_args,
+                pickled_kwargs,
             )
             self.comm.send(
                 payload,
@@ -277,7 +283,7 @@ class NullParallelizer(Parallelizer):
         """
         Do the same
         """
-        task = PREPARED_TASKS[task_name]
+        task = self.get_prepared_task(task_name)
         self._task_results[task_id] = task(*args, **kwargs)
         return self
 

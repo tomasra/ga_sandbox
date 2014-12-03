@@ -75,7 +75,7 @@ with Parallelizer(prepared_tasks) as parallelizer:
             best = population.best_individual.fitness
             average = population.average_fitness
             solution = population.best_individual
-            print best, average
+            print "#%i | best: %f, avg: %f" % (generation, best, average)
             if best > FITNESS_THRESHOLD:
                 print "Solution found in %i iterations" % generation
                 break
@@ -129,7 +129,7 @@ with Parallelizer(prepared_tasks) as parallelizer:
             best = population.best_individual.fitness
             average = population.average_fitness
             solution = population.best_individual
-            print best, average
+            print "#%i | best: %f, avg: %f" % (generation, best, average)
             if best > FITNESS_THRESHOLD:
                 print "Solution found in %i iterations" % generation
                 break

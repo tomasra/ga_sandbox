@@ -42,15 +42,16 @@ class Population(object):
         # Distribute: individual index as task ID
         if self.parallelizer is not None:
             for task_id, individual in enumerate(self):
-                # This is quite inefficient in this case:
-                # self.parallelizer.start_task(
-                #     task_id, lambda: individual._calculate_fitness())
+                if individual.fitness is None:
+                    # This is quite inefficient in this case:
+                    # self.parallelizer.start_task(
+                    #     task_id, lambda: individual._calculate_fitness())
 
-                # So use this:
-                self.parallelizer.start_prepared_task(
-                    task_id, 'calculate_fitness',
-                    # Arbitrary number of parameters
-                    individual.chromosome)
+                    # So use this:
+                    self.parallelizer.start_prepared_task(
+                        task_id, 'calculate_fitness',
+                        # Arbitrary number of parameters
+                        individual.chromosome)
 
             # Collect and assign calculated fitness values for each individual
             for task_id, task_result in self.parallelizer.finished_tasks():
@@ -58,7 +59,8 @@ class Population(object):
         else:
             # Calculate fitness in an ordinary way
             for individual in self:
-                individual.fitness = individual._calculate_fitness()
+                if individual.fitness is None:
+                    individual.fitness = individual._calculate_fitness()
 
         # Calculate these properties once
         self._total_fitness = sum([individual.fitness for individual in self])

@@ -5,12 +5,12 @@ class Individual(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, chromosome=None):
+        self._fitness = None
         # Can be initialized with existing genetic data
         if chromosome is not None:
             self.chromosome = chromosome
         else:
             self.chromosome = self._initialize_chromosome()
-        self._fitness = None
 
     @property
     def chromosome(self):
@@ -19,11 +19,12 @@ class Individual(object):
     @chromosome.setter
     def chromosome(self, value):
         self._chromosome = value
+        # Reset fitness
+        self._fitness = None
+
         # Refresh individual traits on chromosome update
         if self.chromosome is not None:
             self._decode(self.chromosome)
-            # Reset fitness
-            self._fitness = None
 
     def mutate(self, *args, **kwargs):
         """
