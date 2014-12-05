@@ -9,11 +9,11 @@ class Crossover(object):
         Abstract base class for various genetic crossovers
     """
     __metaclass__ = ABCMeta
+    # Can be replaced with fake one in unit tests
+    _randomizer = np.random.RandomState()
 
     def __init__(self, rate):
         self._rate = rate
-        # Can be replaced with fake one in unit tests
-        self._randomizer = np.random.RandomState()
 
     @property
     def rate(self):
