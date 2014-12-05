@@ -1,4 +1,4 @@
-#! /home/tomas/.virtualenvs/ga/bin/python
+#!/usr/bin/env python
 from core.parallelizer import Parallelizer
 import time
 import random

@@ -1,4 +1,4 @@
-#! /home/tomas/.virtualenvs/ga/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from core.algorithm import Algorithm
 from core.chromosomes import IntegerChromosome

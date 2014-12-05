@@ -1,4 +1,4 @@
-#! /home/tomas/.virtualenvs/ga/bin/python
+#!/usr/bin/env python
 import numpy as np
 from core.individual import Individual
 from core.algorithm import Algorithm
