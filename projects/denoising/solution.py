@@ -40,19 +40,6 @@ class _FilterSequence(Individual):
         ]
         return self
 
-    def _initialize_chromosome(self):
-        """
-        Random array of integers, representing filter call indexes
-        """
-        return IntegerChromosome(
-            min_val=0,
-            max_val=len(self.filter_calls) - 1,
-            initial_length=self.sequence_length)
-
-    def _calculate_fitness(self):
-        # Leave for subclasses
-        raise NotImplementedError
-
 
 class _FilterSequenceUnknownTarget(_FilterSequence):
     """

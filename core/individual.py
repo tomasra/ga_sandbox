@@ -1,6 +1,28 @@
 from abc import ABCMeta, abstractmethod
 
 
+"""
+Example of subclass:
+----------------------------------------------------
+class SpecificIndividual(Individual):
+    genotype = BinaryChromosome(length=10)
+
+    def __init__(self, *args, **kwargs):
+        super(SpecificIndividual, self).__init__(*args, **kwargs)
+
+    def _decode(self, chromosome):
+        # Mapping from genotype to phenotype goes here
+        # Nothing to return here
+        raise NotImplementedError
+
+    def _calculate_fitness(self):
+        # Fitness calculation goes here
+        # Value has to be returned
+        raise NotImplementedError
+
+"""
+
+
 class Individual(object):
     __metaclass__ = ABCMeta
 
@@ -10,7 +32,8 @@ class Individual(object):
         if chromosome is not None:
             self.chromosome = chromosome
         else:
-            self.chromosome = self._initialize_chromosome()
+            # Subclassed individual type must have genotype set
+            self.chromosome = type(self).genotype()
 
     @property
     def chromosome(self):
@@ -50,8 +73,4 @@ class Individual(object):
 
     @abstractmethod
     def _calculate_fitness(self):
-        pass
-
-    @abstractmethod
-    def _initialize_chromosome(self):
         pass

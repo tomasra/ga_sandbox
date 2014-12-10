@@ -62,3 +62,7 @@ class BinaryChromosomeTests(unittest.TestCase):
         self.assertTrue((part1._content == np.array([1, 1])).all())
         self.assertTrue((part2._content == np.array([0, 0])).all())
         self.assertTrue((part3._content == np.array([1, 1])).all())
+
+
+class VarIntegerChromosomeTests(unittest.TestCase):
+    pass

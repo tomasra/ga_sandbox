@@ -105,21 +105,22 @@ class Chromosome(object):
             return self._content.__getitem__(key)
 
 
-class IntegerChromosome(Chromosome):
-    def __init__(self, min_val, max_val, initial_length):
+class _FixedIntegerChromosome(Chromosome):
+    def __init__(self):
         # Numpy array of random numbers from specified interval
-        super(IntegerChromosome, self).__init__(
+        super(_FixedIntegerChromosome, self).__init__(
             self._randomizer.random_integers(
-                min_val, max_val, initial_length))
-        self.min_val = min_val
-        self.max_val = max_val
+                _FixedIntegerChromosome.min_val,
+                _FixedIntegerChromosome.max_val,
+                _FixedIntegerChromosome.length))
 
     def _mutate_gene(self, gene, index):
         """
         Random integer from specified interval
         """
         return self._randomizer.random_integers(
-            self.min_val, self.max_val, 1)
+            _FixedIntegerChromosome.min_val,
+            _FixedIntegerChromosome.max_val, 1)
 
     def _concat_genes(self, other):
         """
@@ -127,17 +128,86 @@ class IntegerChromosome(Chromosome):
         """
         return np.concatenate((self[:], other[:]))
 
-    def __deepcopy__(self, memo):
+
+class _VarIntegerChromosome(Chromosome):
+    """
+    Emulates variable-length integer chromosomes by allowing genes
+    to be active/inactive.
+    Probability of inactive gene is defined by 'null_gene_ratio',
+    passed from IntegerChromosome.
+    Genes are deactivated either in initial random-string generation
+    or in mutation, in addition to usual random integer picking from
+    min/max interval.
+    Iterating such chromosome only yields active genes,
+    but length and indexer methods work with all genes in a standard way.
+    """
+    def __init__(self):
+        # Generate integer array as in ordinary integer chromosome
+        initial_genes = list(self._randomizer.random_integers(
+            _VarIntegerChromosome.min_val,
+            _VarIntegerChromosome.max_val,
+            _VarIntegerChromosome.length))
+
+        # Randomly disable some of the genes
+        for idx, gene in enumerate(initial_genes):
+            if self._randomizer.random_sample() < self.null_gene_rate:
+                initial_genes[idx] = None
+
+        # Finalize creation
+        super(_VarIntegerChromosome, self).__init__(initial_genes)
+
+    def _mutate_gene(self, gene, index):
         """
-        Trying to make cloning of these chromosomes faster.
+        Return None or random integer from min/max interval,
+        depending on the inactive gene probability
         """
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        result.min_val = self.min_val
-        result.max_val = self.max_val
-        result._content = self._content.copy()
-        return result
+        if self._randomizer.random_sample() < self.null_gene_rate:
+            return None
+        else:
+            return self._randomizer.random_integers(
+                _VarIntegerChromosome.min_val,
+                _VarIntegerChromosome.max_val, 1)
+
+    def _concat_genes(self, other):
+        """
+        Concatenate two simple lists
+        """
+        return self._content + other._content
+
+    def __iter__(self):
+        """
+        Enumerate active (non-None) genes
+        """
+        for idx in xrange(len(self)):
+            gene = self[idx]
+            if gene is not None:
+                yield gene
+
+    def active_gene_count(self):
+        return len([active_gene for active_gene in self])
+
+
+class IntegerChromosome(object):
+    """
+    Class factory for different types of integer chromosomes.
+    Returns:
+    : _VarIntegerChromosome - if 'null_gene_rate' is set
+    : _FixedIntegerChromosome - otherwise
+    """
+    def __new__(cls, *args, **kwargs):
+        if 'null_gene_rate' in kwargs:
+            if kwargs['null_gene_rate'] is not None:
+                # Variable length integer chromosome
+                klass = _VarIntegerChromosome
+            else:
+                klass = _FixedIntegerChromosome
+        else:
+            klass = _FixedIntegerChromosome
+
+        # Add all keyword arguments as class attributes
+        for key, value in kwargs.iteritems():
+            setattr(klass, key, value)
+        return klass
 
 
 class BinaryChromosome(Chromosome):
