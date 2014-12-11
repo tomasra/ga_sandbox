@@ -1,25 +1,21 @@
 import numpy as np
-from skimage.data import load, imread
-import skimage.color as color
-import skimage.morphology as mph
 from projects.denoising.imaging.image import Image
-from PIL import ImageOps
-import projects.denoising.imaging.filters as flt
+# import projects.denoising.imaging.filters as flt
 import scipy.ndimage.measurements as msr
 import scipy.cluster.vq as vq
 
 
-def extract_boundaries(image):
-    """
-    Returns binary image with detected edges
-    """
-    gray = rgb2gray(image)
-    edges = flt.sobel(gray)
-    # eroded = flt.erosion(image, size=(3, 3))
-    # boundaries = eroded - image
-    quantized = quantize(edges)
-    inverted = flt.inversion(quantized)
-    return inverted
+# def extract_boundaries(image):
+#     """
+#     Returns binary image with detected edges
+#     """
+#     gray = rgb2gray(image)
+#     edges = flt.sobel(gray)
+#     # eroded = flt.erosion(image, size=(3, 3))
+#     # boundaries = eroded - image
+#     quantized = quantize(edges)
+#     inverted = flt.inversion(quantized)
+#     return inverted
 
 
 def region_sizes(image):

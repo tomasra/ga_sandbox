@@ -1,7 +1,6 @@
 from core.individual import Individual
-from core.chromosomes import IntegerChromosome
 from projects.denoising.imaging.filter_call import FilterCall
-import projects.denoising.imaging.utils as iu
+import projects.denoising.imaging.analysis as analysis
 from projects.denoising.imaging.image import Histogram
 
 
@@ -77,7 +76,7 @@ class _FilterSequenceUnknownTarget(_FilterSequence):
             self.max_histogram_diff - hist_diff) / self.max_histogram_diff
 
         # Connected regions
-        region_count = iu.connected_regions(filtered_image)
+        region_count = analysis.connected_regions(filtered_image)
         fitness_val_regions = 0.0 if region_count == 0 else 1.0 / region_count
 
         # Final fitness value from two components

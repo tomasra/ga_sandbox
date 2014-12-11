@@ -1,4 +1,4 @@
-from skimage.data import load, imread
+# from skimage.data import imread
 import skimage.color as color
 import skimage.morphology as mph
 from PIL import Image, ImageOps
@@ -15,18 +15,18 @@ plt.switch_backend('TkAgg')
 import matplotlib.cm as cm
 
 
-def read_image(filepath):
-    """
-    Reads a PNG image and returns three numpy arrays
-    (as RGB color planes)
-    """
-    input = imread(filepath)
-    # Take RGB planes (exclude alpha channel)
-    rgb = [
-        input[:, :, i]
-        for i in xrange(3)
-    ]
-    return rgb
+# def read_image(filepath):
+#     """
+#     Reads a PNG image and returns three numpy arrays
+#     (as RGB color planes)
+#     """
+#     input = imread(filepath)
+#     # Take RGB planes (exclude alpha channel)
+#     rgb = [
+#         input[:, :, i]
+#         for i in xrange(3)
+#     ]
+#     return rgb
 
 
 def render_image(image, filename=None):
