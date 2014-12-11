@@ -11,7 +11,7 @@
 # --ntasks should be passed via sbatch command line args
 # The same number should also be passed for script itself
 # Also need to set correct python environment:
-# srun true
+srun true
 mpirun -np $1 ../experiment.py \
     --output=$2 \
     --population-size=100 \
@@ -25,4 +25,3 @@ mpirun -np $1 ../experiment.py \
     --max-iterations=1000 \
     --noise-type=snp \
     --noise-param=0.2 \
-    --print-iterations=True \

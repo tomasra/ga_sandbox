@@ -130,6 +130,7 @@ with Parallelizer(prepared_tasks) as parallelizer:
         output['parameters'] = {
             'population_size': args.population_size,
             'elite_size': args.elite_size,
+            'selection': args.selection,
             'crossover_rate': args.crossover_rate,
             'mutation_rate': args.mutation_rate,
             'chromosome_length': args.chromosome_length,
@@ -138,6 +139,10 @@ with Parallelizer(prepared_tasks) as parallelizer:
             'noise_type': args.noise_type,
             'noise_param': args.noise_param,
         }
+        # Specific type of selection
+        if args.selection == 'tournament':
+            output['parameters']['tournament_size'] = args.tournament_size
+
         if args.dump_images is True:
             output['parameters'] += {
                 'source_image_dump': pickle.dumps(source_image),
@@ -161,6 +166,7 @@ with Parallelizer(prepared_tasks) as parallelizer:
             elitism_count=args.elite_size,
             parallelizer=parallelizer)
 
+        # Start counting NOW!
         start = time.time()
         for population, generation in algorithm.run(args.max_iterations):
             # For debugging, mostly
@@ -185,6 +191,7 @@ with Parallelizer(prepared_tasks) as parallelizer:
             if solution.fitness >= args.fitness_threshold:
                 break
 
+        # Time's up
         end = time.time()
         duration = end - start
 
