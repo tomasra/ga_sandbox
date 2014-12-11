@@ -36,7 +36,8 @@ parser.add_argument('--rng-freeze',
 # Filtering params
 parser.add_argument('--noise-type',
                     action='store', type=str,
-                    choices=('snp', 'gaussian'))
+                    choices=('snp', 'gaussian'),
+                    default='snp')
 parser.add_argument('--noise-param',
                     action='store', type=float, default=0.2)
 
