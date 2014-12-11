@@ -60,7 +60,7 @@ if args.rng_freeze is True:
     Chromosome._randomizer = np.random.RandomState(0)
     Crossover._randomizer = np.random.RandomState(1)
     Selection._randomizer = np.random.RandomState(2)
-    noises._randomizer = np.random.RandomState(3)
+    noises._rng_seed = 3
 
 # Suppress numpy's FutureWarnings
 import warnings
@@ -172,4 +172,3 @@ with Parallelizer(prepared_tasks) as parallelizer:
 
         with open(args.output_file, 'w') as f:
             json.dump(output, f)
-        print "Results written to: %s" % args.output_file

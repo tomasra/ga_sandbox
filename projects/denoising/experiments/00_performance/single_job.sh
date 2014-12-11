@@ -18,7 +18,7 @@ mpirun -np $1 ../experiment.py \
     --mutation-rate=0.001 \
     --chromosome-length=30 \
     --fitness-threshold=1.0 \
-    --max-iterations=10 \
+    --max-iterations=100 \
     --rng-freeze=True \
     --noise-type=snp \
     --noise-param=0.2
