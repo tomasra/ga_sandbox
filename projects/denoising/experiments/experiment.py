@@ -23,7 +23,7 @@ parser.add_argument('--selection',
 parser.add_argument('--tournament-size',
                     action='store', type=int, default=0)
 parser.add_argument('--mutation-rate',
-                    action='store', type=float, default=0.001)
+                    action='store', type=float, default=0.005)
 parser.add_argument('--chromosome-length',
                     action='store', type=int, default=30)
 parser.add_argument('--fitness-threshold',
@@ -34,8 +34,11 @@ parser.add_argument('--rng-freeze',
                     action='store', type=bool, default=False)
 
 # Filtering params
-parser.add_argument('--noise-type', action='store', type=str)
-parser.add_argument('--noise-param', action='store', type=float)
+parser.add_argument('--noise-type',
+                    action='store', type=str,
+                    choices=('snp', 'gaussian'))
+parser.add_argument('--noise-param',
+                    action='store', type=float, default=0.2)
 
 # Output
 parser.add_argument('--dump-images',
