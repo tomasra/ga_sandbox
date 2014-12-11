@@ -15,7 +15,9 @@ MAX_POLLS=500
 
 function start_job {
     TASK_COUNT=$1
-    sbatch --ntasks=$TASK_COUNT single_job.sh $TASK_COUNT
+    JOB_ID=$2
+    OUTPUT_FILE="output-$JOB_ID.json"
+    sbatch --ntasks=$TASK_COUNT single_job.sh $TASK_COUNT $OUTPUT_FILE
 
     # ***TESTING***
     # JOB_ID=$[$TASK_COUNT+1000]

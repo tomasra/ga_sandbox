@@ -1,5 +1,6 @@
 *.pyc
 *.txt
+*.json
 !requirements.txt
 venv/
 data/
