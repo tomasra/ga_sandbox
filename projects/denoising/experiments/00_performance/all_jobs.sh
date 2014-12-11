@@ -15,9 +15,7 @@ MAX_POLLS=500
 
 function start_job {
     TASK_COUNT=$1
-    JOB_ID=$2
-    OUTPUT_FILE="output-$JOB_ID.json"
-    sbatch --ntasks=$TASK_COUNT single_job.sh $TASK_COUNT $OUTPUT_FILE
+    sbatch --ntasks=$TASK_COUNT single_job.sh $TASK_COUNT output.json
 
     # ***TESTING***
     # JOB_ID=$[$TASK_COUNT+1000]
@@ -59,5 +57,9 @@ do
             break
         fi
     done
+
+    # Rename output file so its name has job ID
+    OUTPUT_FILENAME="output-$JOB_ID.json"
+    mv output.json $OUTPUT_FILENAME    
     # echo "$JOB_ID has finished"
 done

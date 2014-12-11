@@ -32,6 +32,8 @@ parser.add_argument('--noise-type', action='store', type=str)
 parser.add_argument('--noise-param', action='store', type=float)
 
 # Output
+parser.add_argument('--dump-images',
+                    action='store', type=bool, default=False)
 parser.add_argument('--output-file',
                     action='store', type=str, default='output.json')
 
@@ -119,9 +121,13 @@ with Parallelizer(prepared_tasks) as parallelizer:
             'max_iterations': args.max_iterations,
             'noise_type': args.noise_type,
             'noise_param': args.noise_param,
-            'source_image_dump': pickle.dumps(source_image),
-            'target_image_dump': pickle.dumps(target_image),
         }
+        if args.dump_images is True:
+            output['parameters'] += {
+                'source_image_dump': pickle.dumps(source_image),
+                'target_image_dump': pickle.dumps(target_image),
+            }
+
         # Populate during run
         output['iterations'] = []
         output['results'] = {}
