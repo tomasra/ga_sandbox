@@ -1,6 +1,5 @@
 import numpy as np
 from abc import ABCMeta, abstractmethod
-from core.population import Population
 
 
 class Selection(object):
@@ -38,6 +37,10 @@ class RouletteWheelSelection(Selection):
 
 
 class TournamentSelection(Selection):
+    """
+    Randomly picks several (specified by size parameter) population individuals
+    and selects the best one of them
+    """
     def __init__(self, size):
         self.tournament_size = size
 

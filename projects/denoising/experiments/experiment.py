@@ -16,6 +16,12 @@ parser.add_argument('--elite-size',
                     action='store', type=int, default=10)
 parser.add_argument('--crossover-rate',
                     action='store', type=float, default=0.8)
+parser.add_argument('--selection',
+                    action='store', type=str,
+                    choices=('roulette', 'tournament'),
+                    default='roulette',)
+parser.add_argument('--tournament-size',
+                    action='store', type=int, default=0)
 parser.add_argument('--mutation-rate',
                     action='store', type=float, default=0.001)
 parser.add_argument('--chromosome-length',
@@ -36,6 +42,8 @@ parser.add_argument('--dump-images',
                     action='store', type=bool, default=False)
 parser.add_argument('--output-file',
                     action='store', type=str, default='output.json')
+parser.add_argument('--print-iterations',
+                    action='store', type=bool, default=False)
 
 args = parser.parse_args()
 
@@ -44,7 +52,7 @@ args = parser.parse_args()
 from core.algorithm import Algorithm
 from core.chromosomes import IntegerChromosome
 from core.crossovers import OnePointCrossover
-from core.selections import RouletteWheelSelection
+from core.selections import RouletteWheelSelection, TournamentSelection
 from core.parallelizer import Parallelizer
 from projects.denoising.solution import FilterSequence
 # from projects.denoising.imaging.utils import render_image
@@ -100,6 +108,14 @@ phenotype = FilterSequence(
     source_image=source_image,
     target_image=target_image)
 
+# Selection
+if args.selection == 'roulette':
+    selection = RouletteWheelSelection()
+elif args.selection == 'tournament':
+    selection = TournamentSelection(args.tournament_size)
+else:
+    raise ValueError("Unknown selection type: %s" % args.selection)
+
 
 def calculate_fitness(chromosome):
     individual = phenotype()
@@ -139,7 +155,7 @@ with Parallelizer(prepared_tasks) as parallelizer:
         algorithm = Algorithm(
             phenotype=phenotype,
             crossover=OnePointCrossover(args.crossover_rate),
-            selection=RouletteWheelSelection(),
+            selection=selection,
             population_size=args.population_size,
             mutation_rate=args.mutation_rate,
             elitism_count=args.elite_size,
@@ -147,6 +163,15 @@ with Parallelizer(prepared_tasks) as parallelizer:
 
         start = time.time()
         for population, generation in algorithm.run(args.max_iterations):
+            # For debugging, mostly
+            if args.print_iterations is True:
+                best = population.best_individual.fitness
+                worst = population.worst_individual.fitness
+                average = population.average_fitness
+                solution = population.best_individual
+                print "#%i | best: %f, worst: %f, avg: %f" % (
+                    generation, best, worst, average)
+
             # Write each iteration statistics into output
             iteration_output = {
                 'number': generation,
