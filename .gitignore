@@ -1,10 +1,10 @@
 *.pyc
 *.txt
 *.json
+*.png
 !requirements.txt
 venv/
 data/
 samples/
-results/
 temp/
 *.pickle
