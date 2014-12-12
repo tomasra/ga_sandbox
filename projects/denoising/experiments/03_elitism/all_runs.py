@@ -20,11 +20,16 @@ def all_runs(result_dir):
 
         'noise_type': 'snp',
         'noise_param': 0.2,
+
+        'dump_images': False,
+        'output_file': 'output.json',
+        'print_iterations': False,
     }
 
     # One run for each elitism value
+    pid = os.getpid()
     for elite_size in xrange(1, 100):
-        output_filename = "elite-%i.json" % elite_size
+        output_filename = "elite-%i-%i.json" % elite_size % pid
         filepath = os.path.join(result_dir, output_filename)
         args['output_file'] = filepath
         args['elite_size'] = elite_size
@@ -35,6 +40,4 @@ if __name__ == "__main__":
     abs_dir = os.path.abspath(rel_dir)
     if not os.path.exists(abs_dir):
         os.makedirs(abs_dir)
-    else:
-        raise RuntimeError("Result directory already exists")
     all_runs(abs_dir)
