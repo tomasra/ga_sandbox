@@ -1,9 +1,11 @@
 #!/usr/bin/env python
+import os
 import argparse
 import time
 import json
 import pickle
 import numpy as np
+from bunch import bunchify
 
 # Setup GA
 from core.algorithm import Algorithm
@@ -20,8 +22,15 @@ import projects.denoising.imaging.noises as noises
 import warnings
 warnings.filterwarnings('ignore')
 
+RESULT_FORMAT = '.json'
+TEXT_COLOR = (0, 0, 0)
+BACKGROUND_COLOR = (255, 255, 255)
+
 
 def get_args():
+    """
+    Parse command line arguments
+    """
     parser = argparse.ArgumentParser(
         description='GA experiment'
     )
@@ -70,6 +79,61 @@ def get_args():
     return args
 
 
+def read_results_file(filepath):
+    """
+    Read single JSON-formatted result file
+    """
+    with open(filepath, 'r') as f:
+        json_results = json.load(f)
+    result_set = bunchify(json_results)
+    return result_set
+
+
+def read_results(directory):
+    """
+    Read JSON-formatted results from directory
+    """
+    # Absolute dir path
+    abs_directory = os.path.abspath(directory)
+
+    # Enumerate json files
+    filepaths = [
+        os.path.join(abs_directory, filename)
+        for filename in os.listdir(abs_directory)
+        if os.path.isfile(os.path.join(abs_directory, filename))
+        and filename.endswith(RESULT_FORMAT)
+    ]
+
+    # Read the actual results
+    result_sets = [
+        read_results_file(filepath)
+        for filepath in filepaths
+    ]
+    return result_sets
+
+
+def generate_images(noise_type, noise_param):
+    """
+    Create source image (with noise) and clean target image
+    """
+    chars = CharDrawer()
+    target_image = chars.create_colored_char(
+        'A', TEXT_COLOR, BACKGROUND_COLOR)
+
+    # Add noise
+    if noise_type == 'snp':
+        source_image = noises.salt_and_pepper(
+            target_image, noise_param)
+    elif noise_type == 'gaussian':
+        source_image = noises.gaussian(
+            target_image, var=noise_param)
+    else:
+        raise ValueError("Unknown noise type: %s" % noise_type)
+
+    target_image = chars.create_binary_char('A')
+    return source_image, target_image
+
+
 def run(args):
     if args.rng_freeze is True:
         from core.chromosomes import Chromosome
@@ -82,31 +146,11 @@ def run(args):
         noises._rng_seed = 3
 
     #---------------------------------------------------------------------------
-    # Imaging setup
-    #---------------------------------------------------------------------------
-    TEXT_COLOR = (0, 0, 0)
-    BACKGROUND_COLOR = (255, 255, 255)
-
-    chars = CharDrawer()
-    source_image = chars.create_colored_char(
-        'A', TEXT_COLOR, BACKGROUND_COLOR)
-
-    # Add noise
-    if args.noise_type == 'snp':
-        source_image = noises.salt_and_pepper(
-            source_image, args.noise_param)
-    elif args.noise_type == 'gaussian':
-        source_image = noises.gaussian(
-            source_image, var=args.noise_param)
-    else:
-        raise ValueError("Unknown noise type: %s" % args.noise_type)
-
-    # Clean binary target image
-    target_image = chars.create_binary_char('A')
-
-    #---------------------------------------------------------------------------
     # GA setup
     #---------------------------------------------------------------------------
+    source_image, target_image = generate_images(
+        args.noise_type, args.noise_param)
+
     phenotype = FilterSequence(
         genotype=IntegerChromosome(
             length=args.chromosome_length,
@@ -149,11 +193,12 @@ def run(args):
             if args.selection == 'tournament':
                 output['parameters']['tournament_size'] = args.tournament_size
 
+            # Save images into results file?
             if args.dump_images is True:
-                output['parameters'] += {
-                    'source_image_dump': pickle.dumps(source_image),
-                    'target_image_dump': pickle.dumps(target_image),
-                }
+                output['parameters']['source_image_dump'] = pickle.dumps(
+                    source_image)
+                output['parameters']['target_image_dump'] = pickle.dumps(
+                    target_image)
 
             # Populate during run
             output['iterations'] = []
