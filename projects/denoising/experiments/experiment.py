@@ -130,7 +130,6 @@ def generate_images(noise_type, noise_param):
     else:
         raise ValueError("Unknown noise type: %s" % noise_type)
 
-    target_image = chars.create_binary_char('A')
     return source_image, target_image
 
 
