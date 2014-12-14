@@ -8,7 +8,7 @@ from mpi4py import MPI
 import cProfile
 
 # For debugging
-_PROFILING_ENABLED = True
+_PROFILING_ENABLED = False
 _PROFILE_FILENAME = 'profile'
 _PROFILE_EXTENSION = '.txt'
 

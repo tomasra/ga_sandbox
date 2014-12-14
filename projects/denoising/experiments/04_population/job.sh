@@ -7,4 +7,4 @@
 # $1 - result directory
 
 srun true
-mpirun ./runs.py $1
+mpirun ./run.py $1
