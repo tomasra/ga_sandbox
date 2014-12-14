@@ -1,3 +1,4 @@
+
 class Population(object):
     def __init__(self, phenotype, size=0, parallelizer=None):
         # Class of concrete individual
@@ -49,9 +50,9 @@ class Population(object):
 
                     # So use this:
                     self.parallelizer.start_prepared_task(
-                        task_id, 'calculate_fitness',
-                        # Arbitrary number of parameters
-                        individual.chromosome)
+                        task_id, 'calculate_fitness_parallel',
+                        # Arbitrary number of kwargs
+                        chromosome=individual.chromosome)
 
             # Collect and assign calculated fitness values for each individual
             for task_id, task_result in self.parallelizer.finished_tasks():

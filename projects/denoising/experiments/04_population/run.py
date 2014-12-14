@@ -26,12 +26,12 @@ def all_runs(result_dir):
         'print_iterations': False,
     }
 
-    # One run for each elitism value
+    # Increase population size by 10
     pid = os.getpid()
     for population_size in xrange(10, 1000 + 10, 10):
         # Elitism - 1/10 population
         elite_size = int(population_size * 0.1)
-        output_filename = "population-%i-%i.json" % population_size % pid
+        output_filename = "population-%i-%i.json" % (population_size, pid)
         filepath = os.path.join(result_dir, output_filename)
         args['output_file'] = filepath
         args['population_size'] = population_size

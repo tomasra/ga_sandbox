@@ -8,19 +8,12 @@ class _FilterSequence(Individual):
     """
     Common code for any filter sequence phenotype
     """
-    filter_calls = []
+    def __init__(self, filter_calls, *args, **kwargs):
+        # All available filter calls according to image channel count.
+        self.filter_calls = filter_calls
 
-    def __init__(self, *args, **kwargs):
         # Decoded chromosome data
         self.filter_sequence = None
-
-        # All available filter calls according to image channel count.
-        # Only necessary to populate this once.
-        # TODO: non ideal workaround, fix this.
-        if not _FilterSequence.filter_calls:
-            _FilterSequence.filter_calls = FilterCall.all(
-                len(self.source_image.channels))
-
         super(_FilterSequence, self).__init__(*args, **kwargs)
 
     def __iter__(self):
@@ -51,7 +44,9 @@ class _FilterSequenceUnknownTarget(_FilterSequence):
     HISTOGRAM_WEIGHT = 0.5
     REGION_WEIGHT = 0.5
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, source_image, *args, **kwargs):
+        self.source_image = source_image
+
         # Target is a black/white histogram, instead of specific image
         self.target_histogram = Histogram.binary(
             self.source_image.pixels, self.IDEAL_HIST_BW_RATIO)
@@ -94,7 +89,9 @@ class _FilterSequenceKnownTarget(_FilterSequence):
     : source_image - initial nosified image
     : target_image - corresponding ideal binary image
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, source_image, target_image, *args, **kwargs):
+        self.source_image = source_image
+        self.target_image = target_image
         super(_FilterSequenceKnownTarget, self).__init__(*args, **kwargs)
 
     def _calculate_fitness(self):
@@ -111,20 +108,30 @@ class _FilterSequenceKnownTarget(_FilterSequence):
 
 class FilterSequence(object):
     """
-    Here goes some black magic: instantiating this class does not return
-    an instance but rather another class, depending on keyword arguments.
-    This allows using different phenotypes in GA just by changing
-    which args are passed in creation of FilterSequence.
+    Kind-of-a class factory for different types of solutions
     """
-    def __new__(cls, *args, **kwargs):
-        # Returns one of two previously defined classes
-        if 'target_image' in kwargs and kwargs['target_image'] is not None:
-            klass = _FilterSequenceKnownTarget
+    def __init__(self, genotype, source_image, target_image=None):
+        self.genotype = genotype
+        self.source_image = source_image
+        self.target_image = target_image
+        self.filter_calls = FilterCall.all(
+            len(self.source_image.channels))
 
+    def __call__(self, *args, **kwargs):
+        """
+        Return one of two individual instances, depending on
+        target image availability
+        """
+        if self.target_image is None:
+            return _FilterSequenceUnknownTarget(
+                self.source_image,
+                self.filter_calls,
+                self.genotype,
+                *args, **kwargs)
         else:
-            klass = _FilterSequenceUnknownTarget
-
-        # Add keyword arguments as class attributes
-        for key, value in kwargs.iteritems():
-            setattr(klass, key, value)
-        return klass
+            return _FilterSequenceKnownTarget(
+                self.source_image,
+                self.target_image,
+                self.filter_calls,
+                self.genotype,
+                *args, **kwargs)

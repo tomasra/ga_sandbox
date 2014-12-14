@@ -49,6 +49,8 @@ class Algorithm(object):
             individual2 = self._selection.run(self.population)
 
             # Crossover
+            # Individuals are copied, regardless of whether
+            # crossover actually occurs.
             offspring1, offspring2 = self._crossover.run(
                 individual1, individual2)
 

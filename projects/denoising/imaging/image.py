@@ -28,6 +28,21 @@ class Image(np.ndarray):
         self.channels = _Channels(self.view(np.ndarray))
         self.histogram = Histogram(self)
 
+    def __reduce__(self):
+        """
+        Black magic for correct pickling of numpy subclasses
+        http://stackoverflow.com/questions/26598109/preserve-custom-attributes-when-pickling-subclass-of-numpy-array
+        """
+        pickled_state = super(Image, self).__reduce__()
+        new_state = pickled_state[2] + (self._channels, self._histogram,)
+        return (pickled_state[0], pickled_state[1], new_state)
+        pass
+
+    def __setstate__(self, state):
+        self._channels = state[-2]
+        self._histogram = state[-1]
+        super(Image, self).__setstate__(state[0:-2])
+
     @staticmethod
     def from_channels(channels):
         """

@@ -1,12 +1,11 @@
 from abc import ABCMeta, abstractmethod
+from core.parallelizer import parallel_task
 
 
 """
 Example of subclass:
 ----------------------------------------------------
 class SpecificIndividual(Individual):
-    genotype = BinaryChromosome(length=10)
-
     def __init__(self, *args, **kwargs):
         super(SpecificIndividual, self).__init__(*args, **kwargs)
 
@@ -23,17 +22,30 @@ class SpecificIndividual(Individual):
 """
 
 
+@parallel_task
+# These must be keyword arguments!
+# Phenotype is distributed to workers once, when GA is started,
+# while different chromosome is passed each time when this function
+# is called
+def calculate_fitness_parallel(**kwargs):
+    phenotype = kwargs['phenotype']
+    chromosome = kwargs['chromosome']
+    individual = phenotype(chromosome)
+    return individual._calculate_fitness()
+
+
 class Individual(object):
     __metaclass__ = ABCMeta
 
-    def __init__(self, chromosome=None):
-        self._fitness = None
-        # Can be initialized with existing genetic data
+    def __init__(self, genotype=None, chromosome=None):
         if chromosome is not None:
+            # Can be initialized with existing genetic data
             self.chromosome = chromosome
+        elif genotype is not None:
+            # Or a new chromosome can be created now
+            self.chromosome = genotype()
         else:
-            # Subclassed individual type must have genotype set
-            self.chromosome = type(self).genotype()
+            self.chromosome = None
 
     @property
     def chromosome(self):

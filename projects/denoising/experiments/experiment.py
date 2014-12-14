@@ -148,35 +148,25 @@ def run(args):
     #---------------------------------------------------------------------------
     # GA setup
     #---------------------------------------------------------------------------
-    source_image, target_image = generate_images(
-        args.noise_type, args.noise_param)
-
-    phenotype = FilterSequence(
-        genotype=IntegerChromosome(
-            length=args.chromosome_length,
-            min_val=0,
-            max_val=len(FilterCall.all()) - 1),
-        source_image=source_image,
-        target_image=target_image)
-
-    # Selection
-    if args.selection == 'roulette':
-        selection = RouletteWheelSelection()
-    elif args.selection == 'tournament':
-        selection = TournamentSelection(args.tournament_size)
-    else:
-        raise ValueError("Unknown selection type: %s" % args.selection)
-
-    def calculate_fitness(chromosome):
-        individual = phenotype()
-        individual.chromosome = chromosome
-        return individual._calculate_fitness()
-    prepared_tasks = [calculate_fitness]
-
-    with Parallelizer(prepared_tasks) as parallelizer:
+    with Parallelizer() as parallelizer:
         if parallelizer.master_process:
-            output = {}
+            # Create phenotype representing specific problem to solve
+            # and distribute copies to workers
+            source_image, target_image = generate_images(
+                args.noise_type, args.noise_param)
+
+            phenotype = FilterSequence(
+                genotype=IntegerChromosome(
+                    length=args.chromosome_length,
+                    min_val=0,
+                    max_val=len(FilterCall.all()) - 1),
+                source_image=source_image,
+                target_image=target_image)
+
+            parallelizer.broadcast(phenotype=phenotype)
+
             # Put all parameters into json
+            output = {}
             output['parameters'] = {
                 'population_size': args.population_size,
                 'elite_size': args.elite_size,
@@ -189,9 +179,15 @@ def run(args):
                 'noise_type': args.noise_type,
                 'noise_param': args.noise_param,
             }
-            # Specific type of selection
-            if args.selection == 'tournament':
+
+            # Selection type
+            if args.selection == 'roulette':
+                selection = RouletteWheelSelection()
+            elif args.selection == 'tournament':
+                selection = TournamentSelection(args.tournament_size)
                 output['parameters']['tournament_size'] = args.tournament_size
+            else:
+                raise ValueError("Unknown selection type: %s" % args.selection)
 
             # Save images into results file?
             if args.dump_images is True:

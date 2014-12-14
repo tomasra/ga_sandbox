@@ -27,10 +27,12 @@ class Crossover(object):
         if not rate:
             rate = self.rate
 
-        # Class of individual
-        phenotype = type(parent1)
-
         do_crossover = self._randomizer.random_sample() < rate
+
+        # WARNING: shallow copies
+        offspring1 = copy.copy(parent1)
+        offspring2 = copy.copy(parent2)
+
         if do_crossover:
             # Update chromosomes of the offspring
             chromo1, chromo2 = self._run_specific(
@@ -40,8 +42,8 @@ class Crossover(object):
             chromo1 = copy.deepcopy(parent1.chromosome)
             chromo2 = copy.deepcopy(parent2.chromosome)
 
-        offspring1 = phenotype(chromosome=chromo1)
-        offspring2 = phenotype(chromosome=chromo2)
+        offspring1.chromosome = chromo1
+        offspring2.chromosome = chromo2
         return offspring1, offspring2
 
     @abstractmethod

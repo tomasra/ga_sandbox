@@ -8,7 +8,7 @@ from mpi4py import MPI
 import cProfile
 
 # For debugging
-_PROFILING_ENABLED = False
+_PROFILING_ENABLED = True
 _PROFILE_FILENAME = 'profile'
 _PROFILE_EXTENSION = '.txt'
 
@@ -19,7 +19,8 @@ MASTER_PROC_ID = 0
 TAG_START_TASK = 1000
 TAG_START_PREPARED_TASK = 1001
 TAG_TASK_COMPLETE = 1100
-TAG_TERMINATE = 1200
+TAG_BROADCAST_DATA = 1200
+TAG_TERMINATE = 2000
 
 
 PREPARED_TASKS = {}
@@ -27,7 +28,24 @@ PREPARED_TASKS = {}
 
 def parallel_task(decorated_function):
     """
-    Simple decorator to mark tasks to be run by workers
+    Simple decorator to mark tasks to be run by workers.
+    Decorated function should accept only **kwargs.
+    That dictionary is merged from two parts:
+    - Function call ('start_prepared_task') keyword arguments
+    - Key/value pairs broadcasted from master to workers
+    If the same keyword argument exists both in call arguments
+    and broadcasted arguments, priority is given to broadcasted argument.
+
+    @parallel_task
+    def do_stuff(**kwargs):
+        foo = kwargs['foo']
+        bar = kwargs['bar']
+        return foo + bar
+
+    ### Assuming that 'bar' is already broadcasted to all workers
+    parallelizer.start_prepared_task(
+        task_id=0, 'do_stuff',
+        foo="Here be dragons")
     """
     name = decorated_function.__name__
     if name in PREPARED_TASKS:
@@ -48,6 +66,9 @@ class Parallelizer(object):
             for task in prepared_tasks:
                 task_name = task.__name__
                 self.prepared_tasks[task_name] = task
+
+        # Workers
+        self.received_data = {}
 
     def __enter__(self):
         """
@@ -135,17 +156,15 @@ class Parallelizer(object):
             tag=TAG_START_TASK)
         self._task_semaphore += 1
 
-    def start_prepared_task(self, task_id, task_name, *args, **kwargs):
+    def start_prepared_task(self, task_id, task_name, **kwargs):
         """
         Invoke a predefined task on receiver side with passed arguments.
         """
         if self.get_prepared_task(task_name) is not None:
-            pickled_args = pickle.dumps(args, pickle.HIGHEST_PROTOCOL)
             pickled_kwargs = pickle.dumps(kwargs, pickle.HIGHEST_PROTOCOL)
             payload = (
                 task_id,
                 task_name,
-                pickled_args,
                 pickled_kwargs,
             )
             self.comm.send(
@@ -175,6 +194,24 @@ class Parallelizer(object):
             # Reset everything
             self._available_workers = self._get_worker_ids()
             self._task_results = {}
+
+    def broadcast(self, **kwargs):
+        """
+        Distribute arbitrary key/value pairs to workers
+        to be later used in calculations
+        """
+        if self.master_process:
+            # Notify all workers about incoming data so they block
+            # on 'bcast' call
+            for worker_id in self._get_worker_ids():
+                self.comm.send(
+                    None,
+                    dest=worker_id,
+                    tag=TAG_BROADCAST_DATA)
+
+            # Broadcast the data itself
+            self.comm.bcast(kwargs, root=MASTER_PROC_ID)
+        return self
 
     def _wait_for_worker(self):
         """
@@ -232,17 +269,27 @@ class Parallelizer(object):
 
             elif status.tag == TAG_START_PREPARED_TASK:
                 # Unpack all task info and get the task itself
-                task_id, task_name, args, kwargs = message
-                args = pickle.loads(args)
+                task_id, task_name, kwargs = message
                 kwargs = pickle.loads(kwargs)
+                # Add any previously broadcasted/received keyword arguments
+                # THIS MIGHT OVERRIDE EXISTING ARGUMENTS!
+                kwargs = dict(kwargs.items() + self.received_data.items())
 
                 # Run the task and send results back
                 task = self.get_prepared_task(task_name)
-                result = task(*args, **kwargs)
+                result = task(**kwargs)
                 payload = (task_id, result)
                 self.comm.send(
                     payload,
                     dest=MASTER_PROC_ID, tag=TAG_TASK_COMPLETE)
+
+            elif status.tag == TAG_BROADCAST_DATA:
+                # Receive dictionary from master process
+                # and store its keys/values
+                received_data = {}
+                received_data = self.comm.bcast(
+                    received_data, root=MASTER_PROC_ID)
+                self.received_data.update(received_data)
 
             elif status.tag == TAG_TERMINATE:
                 # Exit loop
@@ -261,6 +308,7 @@ class NullParallelizer(Parallelizer):
     def __init__(self, *args, **kwargs):
         super(NullParallelizer, self).__init__(*args, **kwargs)
         self._task_results = {}
+        self._received_data = {}
 
     def __enter__(self):
         return self
@@ -284,8 +332,12 @@ class NullParallelizer(Parallelizer):
         Do the same
         """
         task = self.get_prepared_task(task_name)
-        self._task_results[task_id] = task(*args, **kwargs)
+        all_kwargs = dict(kwargs.items() + self._received_data.items())
+        self._task_results[task_id] = task(**all_kwargs)
         return self
+
+    def broadcast(self, **kwargs):
+        self._received_data.update(kwargs)
 
     def finished_tasks(self):
         """
