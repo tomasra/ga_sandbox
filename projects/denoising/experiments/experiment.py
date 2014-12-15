@@ -242,6 +242,11 @@ def run(args):
             duration = end - start
 
             # Write results to file
+            # But first - unset source and target images to prevent them
+            # from being serialized
+            solution.source_image = None
+            solution.target_image = None
+
             output['results'] = {
                 'solution_dump': pickle.dumps(solution),
                 'run_time': duration,

@@ -85,7 +85,6 @@ class _FilterSequenceUnknownTarget(_FilterSequence):
 class _FilterSequenceKnownTarget(_FilterSequence):
     """
     Required arguments from FilterSequence construction:
-    : sequence_length - filter count in solution
     : source_image - initial nosified image
     : target_image - corresponding ideal binary image
     """
