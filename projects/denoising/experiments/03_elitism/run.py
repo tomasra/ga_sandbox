@@ -29,7 +29,7 @@ def all_runs(result_dir):
     # One run for each elitism value
     pid = os.getpid()
     for elite_size in xrange(1, 100):
-        output_filename = "elite-%i-%i.json" % elite_size % pid
+        output_filename = "elite-%i-%i.json" % (elite_size, pid)
         filepath = os.path.join(result_dir, output_filename)
         args['output_file'] = filepath
         args['elite_size'] = elite_size

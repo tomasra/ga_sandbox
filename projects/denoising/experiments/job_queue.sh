@@ -1,32 +1,25 @@
 #!/bin/bash
 
-# GA parameters
-ELITE_SIZE_MIN=1
-ELITE_SIZE_MAX=100
+# To be passed as parameter
+JOB_SCRIPT=$1
 
-# Parallel process count
-PROC_COUNT=31
+RUN_START=1
+RUN_END=10
 
-# How many times to run whole algorithm with each set of parameters
-REPEAT_RUNS=20
+RESULT_DIR=results
+# Create if is not existing yet
+mkdir -p $RESULT_DIR
 
 # How much time to wait (in seconds) before running squeue
 # and so checking if the last job has finished
-POLLING_PERIOD=1
+POLLING_PERIOD=2
 
 # Move on to next job if last one does not end soon enough
-MAX_POLLS=1000
+# Let's wait for two hours total (max time of 'short' job queue)
+MAX_POLLS=3600
 
 function start_job {
-    TASK_COUNT=$1
-    ELITE_SIZE=$2
-    
-    # Submit slurm job
-    sbatch --ntasks=$TASK_COUNT single_job.sh \
-        $TASK_COUNT \
-        output.json \
-        $ELITE_SIZE
-
+    sbatch $JOB_SCRIPT ./$RESULT_DIR/run$1
 
     # ***TESTING***
     # JOB_ID=$[$TASK_COUNT+1000]
@@ -50,14 +43,13 @@ function job_running {
     # echo 0
 }
 
-
-# Roulette wheel selection
-for ELITE_SIZE in `seq $ELITE_SIZE_MIN $ELITE_SIZE_MAX`;
+# Run job with each number of tasks:
+for RUN in `seq $RUN_START $RUN_END`;
 do
     # Create batch job and parse its ID
     # Output is supposed to be in such format:
     # "Submitted batch job 181057"
-    JOB_ID=$(start_job $PROC_COUNT $ELITE_SIZE | awk '{ print $4 }')
+    JOB_ID=$(start_job $RUN | awk '{ print $4 }')
 
     # Now wait until it disappears from squeue or poll count reaches maximum
     POLL_COUNT=0
@@ -69,8 +61,4 @@ do
             break
         fi
     done
-
-    # Rename output file so its name has job ID
-    OUTPUT_FILENAME="elite-$ELITE_SIZE-$JOB_ID.json"
-    mv output.json $OUTPUT_FILENAME
 done
