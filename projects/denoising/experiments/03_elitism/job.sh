@@ -6,5 +6,4 @@
 # Arguments:
 # $1 - result directory (should not be existing)
 
-srun true
 mpirun ./run.py $1
