@@ -1,6 +1,7 @@
 import unittest
 from mock import Mock, patch
-from core.crossovers import Crossover, OnePointCrossover, TwoPointCrossover
+from core.crossovers import Crossover,  UniformCrossover
+from core.crossovers import OnePointCrossover, TwoPointCrossover
 from core.chromosomes import BinaryChromosome
 
 
@@ -98,3 +99,22 @@ class TwoPointCrossoverTest(unittest.TestCase):
         self.assertItemsEqual(
             [new1, new2],
             ["000111000", "111000111"])
+
+
+class UniformCrossoverTest(unittest.TestCase):
+    def test_uniform_crossover(self):
+        """
+        Crossover - uniform (with fixed rate 0.5)
+        """
+        chromo1 = [0, 0, 0, 0]
+        chromo2 = [1, 1, 1, 1]
+
+        crossover = UniformCrossover(1.0)
+        fake_rand = Mock()
+        # Swap, keep, swap, keep
+        fake_rand.randint.side_effect = [1, 0, 1, 0]
+        crossover._randomizer = fake_rand
+
+        new1, new2 = crossover._run_specific(chromo1, chromo2)
+        self.assertSequenceEqual(new1, [1, 0, 1, 0])
+        self.assertSequenceEqual(new2, [0, 1, 0, 1])

@@ -104,6 +104,9 @@ class Chromosome(object):
             # Return one gene
             return self._content.__getitem__(key)
 
+    def __setitem__(self, key, value):
+        self._content.__setitem__(key, value)
+
 
 class _FixedIntegerChromosome(Chromosome):
     def __init__(self, length, min_val, max_val):

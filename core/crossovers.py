@@ -88,9 +88,21 @@ class TwoPointCrossover(Crossover):
         return offspring1, offspring2
 
 
-class UniformCrossover(object):
-    # TODO
-    pass
+class UniformCrossover(Crossover):
+    def __init__(self, *args, **kwargs):
+        super(UniformCrossover, self).__init__(*args, **kwargs)
+
+    def _run_specific(self, chromo1, chromo2):
+        # Offspring
+        o1 = copy.deepcopy(chromo1)
+        o2 = copy.deepcopy(chromo2)
+        for index in xrange(len(chromo1)):
+            # Hardcoded 0.5 probability - might be nice to pass this in
+            rnd = self._randomizer.randint(2)
+            if rnd == 1:
+                # Swap genes
+                o1[index], o2[index] = o2[index], o1[index]
+        return o1, o2
 
 
 class TreeCrossover(object):
