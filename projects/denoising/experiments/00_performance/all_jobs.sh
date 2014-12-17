@@ -8,14 +8,16 @@ TASK_COUNT_FINISH=101
 
 # How much time to wait (in seconds) before running squeue
 # and so checking if the last job has finished
-POLLING_PERIOD=5
+POLLING_PERIOD=2
 
 # Move on to next job if last one does not end soon enough
-MAX_POLLS=500
+MAX_POLLS=3600
+
+RESULT_DIR = ./results
 
 function start_job {
     TASK_COUNT=$1
-    sbatch --ntasks=$TASK_COUNT single_job.sh $TASK_COUNT output.json
+    sbatch --ntasks=$TASK_COUNT job.sh $RESULT_DIR
 
     # ***TESTING***
     # JOB_ID=$[$TASK_COUNT+1000]

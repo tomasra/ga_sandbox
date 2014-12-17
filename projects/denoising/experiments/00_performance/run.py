@@ -1,104 +1,43 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-"""
-Performance test.
-"""
-
-from core.algorithm import Algorithm
-from core.chromosomes import IntegerChromosome
-from core.crossovers import OnePointCrossover
-from core.selections import RouletteWheelSelection
-from core.parallelizer import Parallelizer, parallel_task
-from projects.denoising.solution import FilterSequence
-from projects.denoising.imaging.utils import render_image
-from projects.denoising.imaging.char_drawer import CharDrawer
-import projects.denoising.imaging.noises as noises
-import time
-
-# Initialize all RNGs with constant seeds
-import numpy as np
-from core.chromosomes import Chromosome
-from core.crossovers import Crossover
-from core.selections import Selection
-
-Chromosome._randomizer = np.random.RandomState(0)
-Crossover._randomizer = np.random.RandomState(1)
-Selection._randomizer = np.random.RandomState(2)
-noises._randomizer = np.random.RandomState(3)
-
-# Suppress numpy's FutureWarnings
-import warnings
-warnings.filterwarnings('ignore')
+import os
+import sys
+from bunch import bunchify
+from projects.denoising.experiments import experiment
 
 
-# GA parameters
-POPULATION_SIZE = 100
-ELITISM_COUNT = 10
-CROSSOVER_RATE = 0.8
-MUTATION_RATE = 0.001
-CHROMOSOME_LENGTH = 30
+def all_runs(result_dir):
+    args = {
+        'population_size': 100,
+        'elite_size': 0,
+        'selection': 'roulette',
+        'tournament_size': 0,
+        'crossover_rate': 0.8,
+        'mutation_rate': 0.005,
+        'chromosome_length': 30,
+        'fitness_threshold': 0.98,
+        'max_iterations': 100,
+        'rng_freeze': False,
 
-# Character parameters
-ALL_CHARS = u"AĄBCČDEĘĖFGHIĮYJKLMNOPRSŠTUŲŪVZŽ0123456789"
-TEXT_COLOR = (0, 160, 0)
-BACKGROUND_COLOR = (0, 255, 0)
-TTB_RATIO = 0.1
+        'noise_type': 'snp',
+        'noise_param': 0.2,
 
-# Noise parameters
-SNP_NOISE_PARAM = 0.15
-GAUSSIAN_NOISE_SIGMA = 40.0
+        'dump_images': False,
+        'output_file': 'output.json',
+        'print_iterations': False,
+    }
 
-chars = CharDrawer()
-#---------------------------------------------------
-# Salt-and-pepper
-# Known target image
-#---------------------------------------------------
-source_image = chars.create_colored_char(
-    'A', TEXT_COLOR, BACKGROUND_COLOR)
+    # One run for each elitism value
+    pid = os.getpid()
+    for chromosome_length in xrange(10, 100 + 1, 5):
+        output_filename = "perf-%i-%i.json" % (chromosome_length, pid)
+        filepath = os.path.join(result_dir, output_filename)
+        args['chromosome_length'] = chromosome_length
+        args['output_file'] = filepath
+        experiment.run(bunchify(args))
 
-# Add noise
-source_image = noises.salt_and_pepper(source_image, SNP_NOISE_PARAM)
-
-# Clean binary target image
-target_image = chars.create_binary_char('A')
-
-phenotype = FilterSequence(
-    sequence_length=CHROMOSOME_LENGTH,
-    source_image=source_image,
-    target_image=target_image)
-
-
-def calculate_fitness(chromosome):
-    individual = phenotype()
-    individual.chromosome = chromosome
-    return individual._calculate_fitness()
-prepared_tasks = [calculate_fitness]
-
-with Parallelizer(prepared_tasks) as parallelizer:
-    if parallelizer.master_process:
-        solution = None
-
-        # Start GA
-        algorithm = Algorithm(
-            phenotype=phenotype,
-            crossover=OnePointCrossover(CROSSOVER_RATE),
-            selection=RouletteWheelSelection(),
-            population_size=POPULATION_SIZE,
-            mutation_rate=MUTATION_RATE,
-            elitism_count=ELITISM_COUNT,
-            parallelizer=parallelizer)
-
-        start = time.time()
-        for population, generation in algorithm.run(100):
-            pass
-            # best = population.best_individual.fitness
-            # worst = population.worst_individual.fitness
-            # average = population.average_fitness
-            # solution = population.best_individual
-            # print "#%i | best: %f, worst: %f, avg: %f" % (
-            #     generation, best, worst, average)
-
-        end = time.time()
-        duration = end - start
-        print parallelizer.proc_count, duration
+if __name__ == "__main__":
+    rel_dir = sys.argv[1]
+    abs_dir = os.path.abspath(rel_dir)
+    if not os.path.exists(abs_dir):
+        os.makedirs(abs_dir)
+    all_runs(abs_dir)
