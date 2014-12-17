@@ -1,6 +1,8 @@
 import unittest
 from mock import Mock, MagicMock, patch
-from core.selections import RouletteWheelSelection, TournamentSelection
+from core.selections import RouletteWheelSelection
+from core.selections import TournamentSelection
+from core.selections import RankSelection
 
 
 class _FakePopulation(list):
@@ -74,3 +76,37 @@ class TournamentSelectionTests(unittest.TestCase):
         # Selection should return the third chromosome
         self.assertEqual(
             selection.run(population).fitness, 0.3)
+
+
+class RankSelectionTests(unittest.TestCase):
+    def test_selection(self):
+        """
+        Rank selection - run
+        """
+        population = _FakePopulation()
+        # Note: best individuals first
+        population += [
+            _FakeIndividual(fitness=0.4),
+            _FakeIndividual(fitness=0.3),
+            _FakeIndividual(fitness=0.2),
+            _FakeIndividual(fitness=0.1),
+        ]
+        # Rank bins would look like this:
+        # |4444|333|22|1|
+        # 1-based indexing!
+
+        selection = RankSelection()
+        # Select second-best individual, then first, then third
+        fake_rand = Mock()
+        fake_rand.random_integers.side_effect = [6, 4, 8]
+        selection._randomizer = fake_rand
+
+        # Second
+        self.assertEqual(
+            selection.run(population).fitness, 0.3)
+        # First
+        self.assertEqual(
+            selection.run(population).fitness, 0.4)
+        # Third
+        self.assertEqual(
+            selection.run(population).fitness, 0.2)

@@ -36,6 +36,26 @@ class RouletteWheelSelection(Selection):
         raise RuntimeError('Roulette wheel did not pick any chromosome.')
 
 
+class RankSelection(Selection):
+    """
+    Linear Rank selection.
+    """
+    def run(self, population):
+        n = len(population)
+        rank_sum = (n * (n - 1)) / 2
+        alpha = self._randomizer.random_integers(1, rank_sum)
+        cumulative_rank = 0
+        for index, individual in enumerate(population.best_individuals()):
+            # Individual rank, higher means better fitness
+            rank = n - index
+            cumulative_rank += rank
+            if alpha <= cumulative_rank:
+                return individual
+
+        # Should never reach this
+        raise RuntimeError('Rank selection did not pick any chromosome.')
+
+
 class TournamentSelection(Selection):
     """
     Randomly picks several (specified by size parameter) population individuals
