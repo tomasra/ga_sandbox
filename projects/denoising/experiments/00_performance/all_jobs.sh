@@ -4,7 +4,7 @@
 TASK_COUNT_START=2
 
 # Number of parallel tasks to end with
-TASK_COUNT_FINISH=101
+TASK_COUNT_FINISH=51
 
 # How much time to wait (in seconds) before running squeue
 # and so checking if the last job has finished
@@ -13,7 +13,8 @@ POLLING_PERIOD=2
 # Move on to next job if last one does not end soon enough
 MAX_POLLS=3600
 
-RESULT_DIR = ./results
+RESULT_DIR=$1
+mkdir -p RESULT_DIR
 
 function start_job {
     TASK_COUNT=$1
@@ -59,9 +60,4 @@ do
             break
         fi
     done
-
-    # Rename output file so its name has job ID
-    OUTPUT_FILENAME="output-$JOB_ID.json"
-    mv output.json $OUTPUT_FILENAME    
-    # echo "$JOB_ID has finished"
 done
