@@ -36,7 +36,7 @@ class Population(object):
             self._individuals.append(individual)
         return self
 
-    def calculate_fitness(self):
+    def calculate_fitness(self, truncate_if_above=None):
         """
         Calculate individual fitness values in parallel
         """
@@ -63,13 +63,23 @@ class Population(object):
                 if individual.fitness is None:
                     individual.fitness = individual._calculate_fitness()
 
-        # Calculate these properties once
-        self._total_fitness = sum([individual.fitness for individual in self])
-        self._average_fitness = self._total_fitness / len(self)
         self._best_individuals = sorted(
             self,
             key=lambda individual: individual.fitness,
             reverse=True)
+
+        # HACK: if actual population size is larger than expected,
+        # remove least fit individuals
+        if truncate_if_above is not None:
+            to_remove = len(self) - truncate_if_above
+            if to_remove > 0:
+                for individual in self.worst_individuals(to_remove):
+                    self._individuals.remove(individual)
+                    self._best_individuals.remove(individual)
+
+        # Calculate these properties once
+        self._total_fitness = sum([individual.fitness for individual in self])
+        self._average_fitness = self._total_fitness / len(self)
 
     @property
     def total_fitness(self):
@@ -104,6 +114,16 @@ class Population(object):
         Individual with lowest fitness
         """
         try:
-            return self.best_individuals()[-1]
+            # return self.best_individuals()[-1]
+            return self.worst_individuals(1)[0]
         except IndexError:
             return None
+
+    def worst_individuals(self, count=None):
+        """
+        Specified number of individuals with lowest fitness
+        """
+        if count is None:
+            return self._best_individuals[::-1]
+        else:
+            return self._best_individuals[::-1][:count]

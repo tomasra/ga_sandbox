@@ -26,6 +26,13 @@ class Algorithm(object):
         # Etc
         self._parallelizer = parallelizer
         self._population = None
+        # Odd elitist size - selection/crossover/mutation is done in pairs
+        # so eventually the new population will get one extra individual
+        # which needs to be dealt with
+        if self.elitism_count % 2 == 1:
+            self._remove_extra_individual = True
+        else:
+            self._remove_extra_individual = False
 
     @property
     def population(self):
@@ -60,7 +67,14 @@ class Algorithm(object):
 
             new_population += [offspring1, offspring2]
 
-        new_population.calculate_fitness()
+        # If elitism param is odd number, the new population might have got
+        # one extra individual. Remove the worst?
+        if self._remove_extra_individual is True:
+            new_population.calculate_fitness(
+                truncate_if_above=self.population_size)
+        else:
+            new_population.calculate_fitness()
+
         return new_population
 
     def run(self, generations=None):
