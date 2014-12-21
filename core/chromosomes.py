@@ -216,6 +216,45 @@ class IntegerChromosome(object):
                 self.null_gene_rate)
 
 
+class IntListChromosome(Chromosome):
+    """
+    Variable length integer chromosome
+    """
+    def __init__(self, min_val, max_val, max_length):
+        self.min_val = min_val
+        self.max_val = max_val
+        self.max_length = max_length
+
+        # Numpy array of random numbers from specified interval
+        super(_FixedIntegerChromosome, self).__init__(
+            self._randomizer.random_integers(
+                self.min_val,
+                self.max_val,
+                self.length))
+
+    def __call__(self):
+        """
+        HACK / WORKAROUND?
+        Make it possible to use this instance as genotype,
+        instantiation of which yields a new randomly generated chromosome.
+        """
+        return IntListChromosome(
+            self.min_val, self.max_val, self.max_length)
+
+    def _mutate_gene(self, gene, index):
+        """
+        Random integer from specified interval
+        """
+        return self._randomizer.random_integers(
+            self.min_val, self.max_val, 1)
+
+    def _concat_genes(self, other):
+        """
+        Concatenate both numpy arrays
+        """
+        return np.concatenate((self[:], other[:]))
+
+
 class BinaryChromosome(Chromosome):
     def __init__(self, initial_length):
         # Numpy array of bits

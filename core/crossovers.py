@@ -105,6 +105,24 @@ class UniformCrossover(Crossover):
         return o1, o2
 
 
+class CutSpliceCrossover(Crossover):
+    def __init__(self, *args, **kwargs):
+        super(CutSpliceCrossover, self).__init__(*args, **kwargs)
+
+    def _run_specific(self, chromo1, chromo2):
+        # Split first chromosome at random point
+        point1 = chromo1.pick_split_point()
+        chromo1_1, chromo1_2 = chromo1.split(point1)
+
+        # Split second at another random point
+        point2 = chromo2.pick_split_point()
+        chromo2_1, chromo2_2 = chromo2.split(point2)
+
+        offspring1 = chromo1_1.concat(chromo2_2)
+        offspring2 = chromo1_2.concat(chromo2_1)
+        return offspring1, offspring2
+
+
 class TreeCrossover(object):
     # TODO
     pass
