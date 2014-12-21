@@ -16,6 +16,9 @@ from scipy.optimize import curve_fit
 from projects.denoising.experiments.experiment import read_results
 
 
+MIN_PROC_COUNT = 2
+
+
 def f_exp(x, a, b, c):
     return a * np.exp(-b * x) + c
 
@@ -177,37 +180,33 @@ class PerformanceModel(object):
 
     def optimal_proc_count(
             self, population_size, chromosome_length,
-            slope_threshold=-0.005,
-            max_proc_count=100):
+            speedup_threshold=10.0):     # percentages!
         """
-        With fixed population size and chromosome length parameters
-        gradually increase process count, find tangent line at each point
-        and check its slope. When it gets close enough to zero - treat
-        that point as a good process count choice for these parameters.
+        Start with a minimum number of processes,
+        keep adding an additional one and check if time decrease is good enough.
+        Stop this when time decrease percentage falls below speedup_threshold.
         """
-        exp_a = f_plane(
-            [population_size, chromosome_length],
-            *self.exp1_params)
-        exp_b = f_plane(
-            [population_size, chromosome_length],
-            *self.exp2_params)
-        exp_c = f_plane(
-            [population_size, chromosome_length],
-            *self.exp3_params)
-        print exp_a, exp_b, exp_c
+        time_previous, time_current = None, None
+        for proc_count in xrange(
+                MIN_PROC_COUNT,
+                population_size + MIN_PROC_COUNT):
+            # Estimated iteration time with current process count
+            time_previous = time_current
+            time_current = self.predict_one(
+                population_size, chromosome_length, proc_count)
 
-        for proc_count in xrange(1, max_proc_count + 1):
+            # Skip the first
+            if proc_count == MIN_PROC_COUNT:
+                continue
 
-            # Derivative at current point
-            slope = f_exp(
-                proc_count,
-                exp_a * exp_b * -1, exp_b, 0)
-            # print slope
-            if slope > slope_threshold:
-                return proc_count
+            # Time percentage decrease compared to previous proc count
+            speedup_pct = (time_previous - time_current) / time_previous * 100.0
+            if speedup_pct < speedup_threshold:
+                # Not worth adding this additional process
+                return proc_count - 1
 
         # Not found?
-        raise RuntimeError("Maximum process count exceeded")
+        raise RuntimeError("Process count exceeded population size")
 
     def r2_score(self, data):
         """
