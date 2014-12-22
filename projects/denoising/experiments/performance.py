@@ -23,6 +23,10 @@ def f_exp(x, a, b, c):
     return a * np.exp(-b * x) + c
 
 
+def f_hyperbolic(x, a, b):
+    return a / x + b
+
+
 def f_plane(x, a, b, c):
     return a * x[0] + b * x[1] + c
 
@@ -85,10 +89,22 @@ def plot_3d():
 
 
 class PerformanceModel(object):
-    def __init__(self):
-        self.exp1_params = None
-        self.exp2_params = None
-        self.exp3_params = None
+    """
+    Fitting options:
+    'exponential',
+    'hyperbolic'
+    """
+    def __init__(self, curve='hyperbolic'):
+        self.curve = curve
+        if curve == 'exponential':
+            self.exp1_params = None
+            self.exp2_params = None
+            self.exp3_params = None
+        elif curve == 'hyperbolic':
+            self.hyp1_params = None
+            self.hyp2_params = None
+        else:
+            raise ValueError("Unsupported curve type: %s" % curve)
 
     @staticmethod
     def load(filepath):
@@ -114,15 +130,23 @@ class PerformanceModel(object):
                     population_size=population_size,
                     chromosome_length=chromosome_length)
 
-                # Fit to exponent for each population size / chromo length pair
                 proc_counts = [p[2] for p in filtered_data]
                 times = [p[3] for p in filtered_data]
-                popt, pcov = curve_fit(
-                    f_exp,
-                    proc_counts,
-                    times,
-                    # HACK - hardcoded initial values
-                    p0=(0.3, 0.6, 0.03))
+                if self.curve == 'exponential':
+                    # Fit to exponent for each pop size / chromo length pair
+                    popt, pcov = curve_fit(
+                        f_exp,
+                        proc_counts,
+                        times,
+                        # HACK - hardcoded initial values
+                        p0=(0.3, 0.6, 0.03))
+                elif self.curve == 'hyperbolic':
+                    # Fit hyperbola
+                    popt, pcov = curve_fit(
+                        f_hyperbolic,
+                        proc_counts,
+                        times)
+                    print population_size, chromosome_length, popt
 
                 popt_local.append(popt)
                 pcov_local.append(pcov)
@@ -134,22 +158,43 @@ class PerformanceModel(object):
         """
         p_sizes = [p[0] for p in params_local]
         c_lengths = [p[1] for p in params_local]
-        exp_param1 = [p[0] for p in popt_local]
-        exp_param2 = [p[1] for p in popt_local]
-        exp_param3 = [p[2] for p in popt_local]
 
-        # Linear regression for every exponential function param
-        exp1_popt, exp1_pcov = curve_fit(
-            f_plane, [p_sizes, c_lengths], exp_param1)
-        exp2_popt, exp2_pcov = curve_fit(
-            f_plane, [p_sizes, c_lengths], exp_param2)
-        exp3_popt, exp3_pcov = curve_fit(
-            f_plane, [p_sizes, c_lengths], exp_param3)
+        if self.curve == 'exponential':
+            exp_param1 = [p[0] for p in popt_local]
+            exp_param2 = [p[1] for p in popt_local]
+            exp_param3 = [p[2] for p in popt_local]
 
-        # Save parameters
-        self.exp1_params = exp1_popt
-        self.exp2_params = exp2_popt
-        self.exp3_params = exp3_popt
+            # Linear regression for every exponential function param
+            exp1_popt, exp1_pcov = curve_fit(
+                f_plane, [p_sizes, c_lengths], exp_param1)
+
+            # Linear regression for the second parameter will not work well,
+            # as it's not really clear how it depends on algorithm params.
+            # Simplest solution for now - just take the average from local fits
+            self.exp2_avg = np.average(exp_param2)
+            # exp2_popt, exp2_pcov = curve_fit(
+            #     f_plane, [p_sizes, c_lengths], exp_param2)
+
+            exp3_popt, exp3_pcov = curve_fit(
+                f_plane, [p_sizes, c_lengths], exp_param3)
+
+            # Save parameters
+            self.exp1_params = exp1_popt
+            # self.exp2_params = exp2_popt
+            self.exp3_params = exp3_popt
+
+        elif self.curve == 'hyperbolic':
+            hyp_param1 = [p[0] for p in popt_local]
+            hyp_param2 = [p[1] for p in popt_local]
+            hyp1_popt, hyp1_pcov = curve_fit(
+                f_plane, [p_sizes, c_lengths], hyp_param1)
+            hyp2_popt, hyp2_pcov = curve_fit(
+                f_plane, [p_sizes, c_lengths], hyp_param2)
+
+            self.hyp1_params = hyp1_popt
+            self.hyp2_params = hyp2_popt
+
+            # print population_size, chromosome_length, hyp1_popt, hyp2_popt
 
     def predict(self, data):
         return [
@@ -164,18 +209,38 @@ class PerformanceModel(object):
         The main function for approximating time of one iteration
         with given parameters
         """
-        val = f_exp(
-            proc_count,
-            f_plane(
+        if self.curve == 'exponential':
+            val = f_exp(
+                proc_count,
+                f_plane(
+                    [population_size, chromosome_length],
+                    *self.exp1_params),
+                # No linear regression for the second param
+                self.exp2_avg,
+                # f_plane(
+                #     [population_size, chromosome_length],
+                #     *self.exp2_params),
+                f_plane(
+                    [population_size, chromosome_length],
+                    *self.exp3_params)
+            )
+        elif self.curve == 'hyperbolic':
+            val = f_hyperbolic(
+                proc_count,
+                f_plane(
+                    [population_size, chromosome_length],
+                    *self.hyp1_params),
+                f_plane(
+                    [population_size, chromosome_length],
+                    *self.hyp2_params)
+            )
+            test1 = f_plane(
                 [population_size, chromosome_length],
-                *self.exp1_params),
-            f_plane(
+                *self.hyp1_params)
+            test2 = f_plane(
                 [population_size, chromosome_length],
-                *self.exp2_params),
-            f_plane(
-                [population_size, chromosome_length],
-                *self.exp3_params)
-        )
+                *self.hyp2_params)
+            print population_size, chromosome_length, test1, test2
         return val
 
     def optimal_proc_count(
@@ -213,7 +278,7 @@ class PerformanceModel(object):
         Goodness-of-fit for new data (must include real times)
         """
         times_true = [d[3] for d in data]
-        times_predicted = model.predict(data)
+        times_predicted = self.predict(data)
         score = r2_score(times_true, times_predicted)
         return score
 
@@ -221,12 +286,12 @@ class PerformanceModel(object):
 class PerformanceData(object):
     def __init__(self, data):
         self.data = data
-        self._population_sizes = list(set([
-            entry[0] for entry in self.data]))
-        self._chromosome_lengths = list(set([
-            entry[1] for entry in self.data]))
-        self._proc_counts = list(set([
-            entry[2] for entry in self.data]))
+        self._population_sizes = sorted(list(set([
+            entry[0] for entry in self.data])))
+        self._chromosome_lengths = sorted(list(set([
+            entry[1] for entry in self.data])))
+        self._proc_counts = sorted(list(set([
+            entry[2] for entry in self.data])))
         self._times = list(set([
             entry[3] for entry in self.data]))
 
@@ -235,6 +300,9 @@ class PerformanceData(object):
 
     def __getitem__(self, key):
         return self.data.__getitem__(key)
+
+    def __len__(self):
+        return self.data.__len__()
 
     def filter(
             self,
