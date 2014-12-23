@@ -66,6 +66,20 @@ def plot_real_predicted(
     plt.show()
 
 
+def plot_predicted(model, population_size, chromosome_length):
+    data = [
+        [population_size, chromosome_length, proc_count]
+        for proc_count in xrange(2, population_size)
+    ]
+    fit_global = model.predict(data)
+
+    fig = plt.figure(figsize=(14, 7))
+    plt.xlabel(u'Procesu skaicius')
+    plt.ylabel(u'Vykdymo trukme')
+    plt.plot(fit_global, label='Globali aproksimacija')
+    plt.show()
+
+
 def plot_3d():
     # TODO
 
@@ -130,13 +144,14 @@ class PerformanceModel(object):
                     population_size=population_size,
                     chromosome_length=chromosome_length)
 
-                proc_counts = [p[2] for p in filtered_data]
+                # Fit against worker counts - not overall proc counts
+                worker_counts = [p[2] - 1 for p in filtered_data]
                 times = [p[3] for p in filtered_data]
                 if self.curve == 'exponential':
                     # Fit to exponent for each pop size / chromo length pair
                     popt, pcov = curve_fit(
                         f_exp,
-                        proc_counts,
+                        worker_counts,
                         times,
                         # HACK - hardcoded initial values
                         p0=(0.3, 0.6, 0.03))
@@ -144,7 +159,7 @@ class PerformanceModel(object):
                     # Fit hyperbola
                     popt, pcov = curve_fit(
                         f_hyperbolic,
-                        proc_counts,
+                        worker_counts,
                         times)
                     print population_size, chromosome_length, popt
 
@@ -209,9 +224,11 @@ class PerformanceModel(object):
         The main function for approximating time of one iteration
         with given parameters
         """
+        # Use worker count instead of overall process count
+        worker_count = proc_count - 1
         if self.curve == 'exponential':
             val = f_exp(
-                proc_count,
+                worker_count,
                 f_plane(
                     [population_size, chromosome_length],
                     *self.exp1_params),
@@ -226,7 +243,7 @@ class PerformanceModel(object):
             )
         elif self.curve == 'hyperbolic':
             val = f_hyperbolic(
-                proc_count,
+                worker_count,
                 f_plane(
                     [population_size, chromosome_length],
                     *self.hyp1_params),
@@ -234,13 +251,6 @@ class PerformanceModel(object):
                     [population_size, chromosome_length],
                     *self.hyp2_params)
             )
-            test1 = f_plane(
-                [population_size, chromosome_length],
-                *self.hyp1_params)
-            test2 = f_plane(
-                [population_size, chromosome_length],
-                *self.hyp2_params)
-            print population_size, chromosome_length, test1, test2
         return val
 
     def optimal_proc_count(
@@ -251,6 +261,7 @@ class PerformanceModel(object):
         keep adding an additional one and check if time decrease is good enough.
         Stop this when time decrease percentage falls below speedup_threshold.
         """
+        # print population_size, chromosome_length
         time_previous, time_current = None, None
         for proc_count in xrange(
                 MIN_PROC_COUNT,
@@ -266,12 +277,17 @@ class PerformanceModel(object):
 
             # Time percentage decrease compared to previous proc count
             speedup_pct = (time_previous - time_current) / time_previous * 100.0
-            if speedup_pct < speedup_threshold:
+            # print speedup_pct
+            if abs(speedup_pct) < speedup_threshold:
                 # Not worth adding this additional process
                 return proc_count - 1
 
+        # Maximum reasonable number of processes
+        return population_size - 1 + MIN_PROC_COUNT
+
         # Not found?
-        raise RuntimeError("Process count exceeded population size")
+        # raise RuntimeError("Process count exceeded population size")
+        raise Warning("Process count exceeded population size")
 
     def r2_score(self, data):
         """
