@@ -8,6 +8,9 @@ from PIL import ImageFont, ImageDraw
 from projects.denoising.imaging.image import Image
 
 
+HORIZONTAL_OFFSET = 4
+
+
 class CharDrawer(object):
     def __init__(
             self,
@@ -57,7 +60,7 @@ class CharDrawer(object):
 
         # color_image = self._image_to_numpy(char_color)
         # bw_image = self._image_to_numpy(char_blacknwhite)
-        bw_image = binarize(bw_image)
+        # bw_image = binarize(bw_image)
 
         return (bw_image, color_image)
 
@@ -71,8 +74,9 @@ class CharDrawer(object):
             bg_color)
         draw = PIL.ImageDraw.Draw(pil_image)
         position = (self.image_size - self.char_size) / 2
+        # import pdb; pdb.set_trace()
         draw.text(
-            (position, position),
+            (position + HORIZONTAL_OFFSET, position),
             character,
             # fill=(0, 0, 0),
             fill=text_color,
@@ -82,29 +86,28 @@ class CharDrawer(object):
         image = Image(np.array(pil_image))
         return image
 
-    @staticmethod
-    def create_colored_char(character, text_color, bg_color):
+    def create_colored_char(self, character, text_color, bg_color):
         """
         Clear color image of specified character
         """
-        char_drawer = CharDrawer(
-            text_color=text_color,
-            bg_color=bg_color
-        )
-        pair = char_drawer.create_pair(character)
+        # char_drawer = CharDrawer(
+        #     text_color=text_color,
+        #     bg_color=bg_color
+        # )
+        pair = self.create_pair(character)
         return pair[1]
 
-    @staticmethod
-    def create_binary_char(character):
-        """
-        Black and white image of specified character
-        """
-        char_drawer = CharDrawer(
-            text_color=(0, 0, 0),
-            bg_color=(255, 255, 255)
-        )
-        pair = char_drawer.create_pair(character)
-        return pair[0]
+    # @staticmethod
+    # def create_binary_char(character):
+    #     """
+    #     Black and white image of specified character
+    #     """
+    #     char_drawer = CharDrawer(
+    #         text_color=(0, 0, 0),
+    #         bg_color=(255, 255, 255)
+    #     )
+    #     pair = char_drawer.create_pair(character)
+    #     return pair[0]
 
     @staticmethod
     def create_mosaic(images, width, height, borders=True):
