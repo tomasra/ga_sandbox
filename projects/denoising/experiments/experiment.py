@@ -13,6 +13,7 @@ from core.chromosomes import IntegerChromosome
 from core.crossovers import OnePointCrossover, TwoPointCrossover
 from core.crossovers import UniformCrossover
 from core.selections import RouletteWheelSelection, TournamentSelection
+from core.selections import RankSelection
 from core.parallelizer import Parallelizer
 from projects.denoising.solution import FilterSequence
 from projects.denoising.imaging.char_drawer import CharDrawer
@@ -201,6 +202,8 @@ def run(args):
             elif args.selection == 'tournament':
                 selection = TournamentSelection(args.tournament_size)
                 output['parameters']['tournament_size'] = args.tournament_size
+            elif args.selection == 'rank':
+                selection = RankSelection()
             else:
                 raise ValueError("Unknown selection type: %s" % args.selection)
 
