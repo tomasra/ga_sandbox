@@ -35,19 +35,19 @@ def filter(decorated_function):
 # Single argument filters
 @filter
 def mean(img):
-    result = fr.mean(img, fm.square(3))
+    result = fr.mean(img, fm.square(3)).astype(img.dtype)
     return result
 
 
 @filter
 def minimum(img):
-    result = sf.minimum_filter(img, size=3)
+    result = sf.minimum_filter(img, size=3).astype(img.dtype)
     return result
 
 
 @filter
 def maximum(img):
-    return sf.maximum_filter(img, size=3)
+    return sf.maximum_filter(img, size=3).astype(img.dtype)
 
 
 @filter
@@ -106,19 +106,19 @@ def darkedge(img):
 
 @filter
 def erosion(img):
-    result = sm.grey_erosion(img, size=(3, 3))
+    result = sm.grey_erosion(img, size=(3, 3)).astype(img.dtype)
     return result
 
 
 @filter
 def dilation(img):
-    result = sm.grey_dilation(img, size=(3, 3))
+    result = sm.grey_dilation(img, size=(3, 3)).astype(img.dtype)
     return result
 
 
 @filter
 def inversion(img):
-    result = np.subtract(255, img)
+    result = np.subtract(255, img).astype(img.dtype)
     return result
 
 
@@ -129,7 +129,7 @@ def logical_sum(img1, img2):
     Maximum of two color planes
     """
     if img1.shape == img2.shape and img1.dtype == img2.dtype:
-        return np.maximum(img1, img2)
+        return np.maximum(img1, img2).astype(img1.dtype)
     else:
         raise ValueError("Image size or dtype mismatch")
 
@@ -140,7 +140,7 @@ def logical_product(img1, img2):
     Minimum of two color planes
     """
     if img1.shape == img2.shape and img1.dtype == img2.dtype:
-        return np.minimum(img1, img2)
+        return np.minimum(img1, img2).astype(img1.dtype)
     else:
         raise ValueError("Image size or dtype mismatch")
 
@@ -157,7 +157,7 @@ def algebraic_sum(img1, img2):
                 np.multiply(img1, img2).astype(np.float32),
                 255
             ).round()
-        )
+        ).astype(img1.dtype)
     else:
         raise ValueError("Image size or dtype mismatch")
 
@@ -171,7 +171,7 @@ def algebraic_product(img1, img2):
         return np.divide(
             np.multiply(img1, img2).astype(np.float32),
             255
-        ).round()
+        ).round().astype(img1.dtype)
     else:
         raise ValueError("Image size or dtype mismatch")
 
@@ -185,7 +185,7 @@ def bounded_sum(img1, img2):
     if img1.shape == img2.shape and img1.dtype == img2.dtype:
         return np.clip(
             np.add(img1, img2), 0, 255
-        )
+        ).astype(img1.dtype)
     else:
         raise ValueError("Image size or dtype mismatch")
 
@@ -203,6 +203,6 @@ def bounded_product(img1, img2):
                 255
             ),
             0, 255
-        )
+        ).astype(img1.dtype)
     else:
         raise ValueError("Image size or dtype mismatch")

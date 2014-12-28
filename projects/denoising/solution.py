@@ -99,9 +99,12 @@ class _FilterSequenceKnownTarget(_FilterSequence):
         translated into [0, 1] range.
         Higher fitness value corresponds to higher image similarity.
         """
-        filtered_image = self.source_image.run_filters(self.filter_sequence)
-        pixel_diff = self.target_image.pixel_diff(filtered_image)
-        fitness = 1.0 - float(pixel_diff) / filtered_image.max_diff
+        filtered_image_channels = self.source_image.run_filters(
+            self.filter_sequence,
+            return_channels=True)
+        pixel_diff = self.target_image.pixel_diff_channels(
+            filtered_image_channels)
+        fitness = 1.0 - float(pixel_diff) / self.target_image.max_diff
         return fitness
 
 

@@ -84,15 +84,24 @@ class Image(np.ndarray):
     def channels(self, value):
         self._channels = value
 
-    def run_filters(self, filter_calls):
+    def run_filters(self, filter_calls, return_channels=False):
         """
         Run a sequence of filters on current image
         and return a new image
         """
-        image = copy.deepcopy(self)
-        for filter_call in filter_calls:
-            image = filter_call(image)
-        return image
+        if return_channels is True:
+            channels = [
+                channel
+                for channel in self.channels
+            ]
+            for filter_call in filter_calls:
+                channels = filter_call(channels=channels)
+            return channels
+        else:
+            image = copy.deepcopy(self)
+            for filter_call in filter_calls:
+                image = filter_call(image=image)
+            return image
 
     def pixel_diff(self, other):
         """
@@ -105,6 +114,18 @@ class Image(np.ndarray):
                 other.view(np.ndarray).astype(np.int16)
             )
         )
+
+    def pixel_diff_channels(self, other_channels):
+        """
+        Same as above, but done for separate channels
+        """
+        self_channels = [channel for channel in self.channels]
+        return np.sum([
+            np.absolute(
+                pair[0].astype(np.int16) - pair[1].astype(np.int16)
+            )
+            for pair in zip(self_channels, other_channels)
+        ])
 
     @property
     def max_diff(self):

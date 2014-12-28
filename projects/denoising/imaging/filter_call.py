@@ -19,27 +19,40 @@ class FilterCall(object):
         # Destination channel index
         self.dest_channel_index = dest_channel_index
 
-    def __call__(self, image, overwrite=True):
+    def __call__(self, image=None, overwrite=True, channels=None):
         """
         Runs filter function on specified image source channels
         and writes result into destination channel.
         Can either return new image or overwrite existing one
         """
-        # positional filter arguments
-        input_channels = [
-            image.channels[i]
-            for i in self.src_channel_indexes
-        ]
-        result_channel = self.filter_function(*input_channels)
-        if overwrite is True:
-            # Put results into existing image channel
-            image.channels[self.dest_channel_index] = result_channel
-            return image
+        if channels is not None:
+            # Caller can pass separate channels instead of full image
+            input_channels = [
+                channels[i]
+                for i in self.src_channel_indexes
+            ]
+            result_channel = self.filter_function(*input_channels)
+            channels[self.dest_channel_index] = result_channel
+            return channels
+
+        elif image is not None:
+            # positional filter arguments
+            input_channels = [
+                image.channels[i]
+                for i in self.src_channel_indexes
+            ]
+            result_channel = self.filter_function(*input_channels)
+            if overwrite is True:
+                # Put results into existing image channel
+                image.channels[self.dest_channel_index] = result_channel
+                return image
+            else:
+                # Create and return new image
+                new_image = copy.deepcopy(image)
+                new_image.channels[self.dest_channel_index] = result_channel
+                return new_image
         else:
-            # Create and return new image
-            new_image = copy.deepcopy(image)
-            new_image.channels[self.dest_channel_index] = result_channel
-            return new_image
+            return None
 
     def __repr__(self):
         return self.name + ': ' +\
