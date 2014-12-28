@@ -9,6 +9,8 @@ INPUT_DIR=$1
 OUTPUT_DIR=$2
 BATCH_COUNT=$3
 PROC_COUNT=$4
+TAG_NAME=$5
+CLUSTER_NAME=$6
 
 # Make sure that result directory exists
 mkdir -p $OUTPUT_DIR
@@ -34,11 +36,13 @@ while [ $BATCH_ID_CURRENT -le $BATCH_ID_END ]; do
     BATCH_INPUT_DIR=${INPUT_DIR%%/}/${BATCH_ID_CURRENT}
 
     # Start the job
-    sbatch --ntasks=$PROC_COUNT job.sh $BATCH_INPUT_DIR $OUTPUT_DIR
+    sbatch --ntasks=$PROC_COUNT \
+        --constraint=$CLUSTER_NAME \
+        --job-name=$TAG_NAME \
+        job.sh $BATCH_INPUT_DIR $OUTPUT_DIR
     BATCH_ID_CURRENT=$(($BATCH_ID_CURRENT+1))
 
-    BATCHES_RUNNING=$(squeue | wc -l)
-    BATCHES_RUNNING=$(($BATCHES_RUNNING-1))
+    BATCHES_RUNNING=$(squeue | grep $TAG_NAME | wc -l)
 
     # When all jobs are up and running
     if [ $BATCHES_RUNNING -eq $BATCH_COUNT ]; then
@@ -49,8 +53,7 @@ while [ $BATCH_ID_CURRENT -le $BATCH_ID_END ]; do
             let POLL_COUNT=POLL_COUNT+1
 
             # Running jobs according to squeue
-            BATCHES_RUNNING=$(squeue | wc -l)
-            BATCHES_RUNNING=$(($BATCHES_RUNNING-1))
+            BATCHES_RUNNING=$(squeue | grep $TAG_NAME | wc -l)
 
             # A job has finished running?
             if [ $BATCHES_RUNNING -lt $BATCH_COUNT ]; then
