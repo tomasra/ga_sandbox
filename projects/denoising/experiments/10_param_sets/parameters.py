@@ -126,10 +126,14 @@ def make_batches(param_sets, time_estimator):
             batches.append(current_batch)
             batch_times.append(current_time)
             current_batch, current_time = [], 0.0
-        else:
-            # Continue adding param sets
-            current_batch.append(param_set)
-            current_time += param_set_times[idx]
+
+        # Continue adding param sets
+        current_batch.append(param_set)
+        current_time += param_set_times[idx]
+
+    # Last batch
+    batches.append(current_batch)
+    batch_times.append(current_time)
 
     return batches, batch_times
 
