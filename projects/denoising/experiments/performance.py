@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#-*- coding: utf-8 -*-
 import argparse
 import pickle
 from sklearn.preprocessing import PolynomialFeatures
@@ -55,15 +56,22 @@ def plot_real_predicted(
         chromosome_length=chromosome_length
     )
     filtered_times = [p[3] for p in filtered_data]
+    worker_counts = [p[2] - 1 for p in filtered_data]
     fit_global = model.predict(filtered_data)
 
+    x_ticks = worker_counts[0::2]
+
     fig = plt.figure(figsize=(14, 7))
-    plt.xlabel(u'Procesu skaicius')
-    plt.ylabel(u'Vykdymo trukme')
-    plt.plot(filtered_times, label='Reali trukme')
-    # plt.plot(fit_local, label='Lokali aproksimacija')
-    plt.plot(fit_global, label='Globali aproksimacija')
+    plt.xlabel(u'Darbinių procesų skaičius')
+    plt.xticks(
+        xrange(0, len(worker_counts), 2),
+        worker_counts[0::2])
+    plt.ylabel(u'Vienos iteracijos trukmė (s)')
+    plt.scatter(xrange(len(worker_counts)), filtered_times)
+    # plt.plot(filtered_times, label='Reali trukme')
+    plt.plot(fit_global, label='Globali aproksimacija', color='red')
     plt.show()
+    # import pdb; pdb.set_trace()
 
 
 def plot_predicted(model, population_size, chromosome_length):
@@ -162,6 +170,34 @@ class PerformanceModel(object):
                         worker_counts,
                         times)
                     print population_size, chromosome_length, popt
+
+
+
+                # if population_size == 30 and chromosome_length == 30:
+                #     filtered_times = [p[3] for p in filtered_data]
+                #     # fit_global = model.predict(filtered_data)
+                #     fit_global = [
+                #         f_hyperbolic(
+                #             worker_count,
+                #             popt[0],
+                #             popt[1]
+                #         )
+                #         for worker_count in worker_counts
+                #     ]
+
+                #     fig = plt.figure(figsize=(14, 7))
+                #     plt.xlabel(u'Darbinių procesų skaičius')
+                #     plt.xticks(
+                #         xrange(0, len(worker_counts), 2),
+                #         worker_counts[0::2])
+                #     plt.ylabel(u'Vienos iteracijos trukmė (s)')
+                #     plt.scatter(xrange(len(worker_counts)), filtered_times, label='Eksperimento duomenys')
+                #     # plt.plot(filtered_times, label='Reali trukme')
+                #     plt.plot(fit_global, label='Aproksimacija', color='red')
+                #     plt.legend(loc='upper right')
+                #     plt.show()
+
+
 
                 popt_local.append(popt)
                 pcov_local.append(pcov)

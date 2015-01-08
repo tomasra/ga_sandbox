@@ -102,25 +102,37 @@ def read_results_file(filepath):
     return result_set
 
 
+def enumerate_results(directory):
+    """
+    Yields filepaths of result files
+    """
+    # Absolute dir path
+    abs_directory = os.path.abspath(directory)
+    for filename in os.listdir(abs_directory):
+        filepath = os.path.join(abs_directory, filename)
+        if os.path.isfile(filepath) and filename.endswith(RESULT_FORMAT):
+            yield filepath
+
+
 def read_results(directory):
     """
     Read JSON-formatted results from directory
     """
     # Absolute dir path
-    abs_directory = os.path.abspath(directory)
+    # abs_directory = os.path.abspath(directory)
 
-    # Enumerate json files
-    filepaths = [
-        os.path.join(abs_directory, filename)
-        for filename in os.listdir(abs_directory)
-        if os.path.isfile(os.path.join(abs_directory, filename))
-        and filename.endswith(RESULT_FORMAT)
-    ]
+    # # Enumerate json files
+    # filepaths = [
+    #     os.path.join(abs_directory, filename)
+    #     for filename in os.listdir(abs_directory)
+    #     if os.path.isfile(os.path.join(abs_directory, filename))
+    #     and filename.endswith(RESULT_FORMAT)
+    # ]
 
     # Read the actual results
     result_sets = [
         read_results_file(filepath)
-        for filepath in filepaths
+        for filepath in enumerate_results(directory)
     ]
     return result_sets
 

@@ -2,6 +2,7 @@
 *.txt
 *.json
 *.png
+*.zip
 !requirements.txt
 venv/
 data/

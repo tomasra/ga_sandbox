@@ -181,6 +181,31 @@ def read(directory):
     return param_sets
 
 
+def read_batches(directory, sort=False):
+    """
+    Same as above, but reads param sets from different folders
+    representing separate batches
+    """
+    dirpaths = [
+        os.path.join(directory, dirname)
+        for dirname in os.listdir(directory)
+        if os.path.isdir(os.path.join(directory, dirname))
+    ]
+    all_param_sets = []
+    for dirpath in dirpaths:
+        batch_param_sets = read(dirpath)
+        all_param_sets += batch_param_sets
+
+    if sort is True:
+        all_param_sets = sorted(
+            all_param_sets,
+            # Sort by output file ID
+            key=lambda ps: int(ps['output_file'].split('.')[0])
+        )
+
+    return all_param_sets
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
