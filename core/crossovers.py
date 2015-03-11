@@ -2,6 +2,7 @@
 import numpy as np
 import copy
 from abc import ABCMeta, abstractmethod
+from core.chromosomes import RealChromosome
 
 
 class Crossover(object):
@@ -123,6 +124,26 @@ class CutSpliceCrossover(Crossover):
         return offspring1, offspring2
 
 
-class TreeCrossover(object):
-    # TODO
-    pass
+class WholeArithmeticCrossover(Crossover):
+    """
+    For real-coded chromosomes only
+    """
+    def __init__(self, alpha=0.3, *args, **kwargs):
+        self.alpha = alpha
+        super(WholeArithmeticCrossover, self).__init__(*args, **kwargs)
+
+    def _run_specific(self, chromo1, chromo2):
+        offspring = zip(*[   
+            (
+                self.alpha * pair[0] + (1.0 - self.alpha) * pair[1],
+                self.alpha * pair[1] + (1.0 - self.alpha) * pair[0]
+            )
+            for pair in zip(chromo1, chromo2)
+        ])
+        offspring1 = RealChromosome(
+            chromo1.length, chromo1.min_val, chromo1.max_val,
+            content=np.array(offspring[0]))
+        offspring2 = RealChromosome(
+            chromo2.length, chromo2.min_val, chromo2.max_val,
+            content=np.array(offspring[1]))
+        return offspring1, offspring2

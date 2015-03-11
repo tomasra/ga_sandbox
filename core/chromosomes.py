@@ -275,3 +275,21 @@ class BinaryChromosome(Chromosome):
 
     def __repr__(self):
         return ''.join(str(int(c)) for c in self)
+
+
+class RealChromosome(Chromosome):
+    def __init__(self, length, min_val, max_val, content=None):
+        self.length = length
+        self.min_val = min_val
+        self.max_val = max_val
+
+        if content is None:
+            # Generate random initial values
+            content = np.random.uniform(self.min_val, self.max_val, self.length)
+        super(RealChromosome, self).__init__(content)
+
+    def _mutate_gene(self, gene, index):
+        return np.random.uniform(self.min_val, self.max_val)
+
+    def _concat_genes(self, other):
+        return np.concatenate((self[:], other[:]))
