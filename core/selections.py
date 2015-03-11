@@ -2,6 +2,22 @@ import numpy as np
 from abc import ABCMeta, abstractmethod
 
 
+"""
+Selection 'factory'
+"""
+def get_selection(params):
+    if params['selection'] == 'roulette':
+        selection = RouletteWheelSelection()
+    elif params['selection'] == 'tournament':
+        selection = TournamentSelection(params['tournament_size'])
+        # output['parameters']['tournament_size'] = params.tournament_size
+    elif params['selection'] == 'rank':
+        selection = RankSelection()
+    else:
+        raise ValueError("Unknown selection type: %s" % params['selection'])
+    return selection
+
+
 class Selection(object):
     __metaclass__ = ABCMeta
     _randomizer = np.random.RandomState()

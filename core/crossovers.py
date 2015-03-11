@@ -5,6 +5,24 @@ from abc import ABCMeta, abstractmethod
 from core.chromosomes import RealChromosome
 
 
+"""
+Crossover 'factory'
+"""
+def get_crossover(params):
+    # Crossover type
+    if params['crossover'] == 'one_point':
+        crossover = OnePointCrossover(params['crossover_rate'])
+    elif params['crossover'] == 'two_point':
+        crossover = TwoPointCrossover(params['crossover_rate'])
+    elif params['crossover'] == 'uniform':
+        crossover = UniformCrossover(params['crossover_rate'])
+    elif params['crossover'] == 'whole_arithmetic':
+        crossover = WholeArithmeticCrossover(params['crossover_rate'])
+    else:
+        raise ValueError("Unknown crossover type: %s" % params['crossover'])
+    return crossover
+
+
 class Crossover(object):
     """
         Abstract base class for various genetic crossovers

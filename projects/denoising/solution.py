@@ -1,7 +1,52 @@
 from core.individual import Individual
-from projects.denoising.imaging.filter_call import FilterCall
+from core.chromosomes import IntegerChromosome
 import projects.denoising.imaging.analysis as analysis
+import projects.denoising.imaging.noises as noises
+from projects.denoising.imaging.filter_call import FilterCall
 from projects.denoising.imaging.image import Histogram
+from projects.denoising.imaging.char_drawer import CharDrawer
+
+
+TEXT_COLOR = (0, 0, 0)
+BACKGROUND_COLOR = (255, 255, 255)
+
+
+def generate_images(noise_type, noise_param):
+    """
+    Create source image (with noise) and clean target image
+    """
+    chars = CharDrawer(
+        image_size=40,
+        char_size=36,
+        text_color=TEXT_COLOR,
+        bg_color=BACKGROUND_COLOR)
+
+    target_image = chars.create_colored_char(
+        'A', TEXT_COLOR, BACKGROUND_COLOR)
+    # Add noise
+    if noise_type == 'snp':
+        source_image = noises.salt_and_pepper(
+            target_image, noise_param)
+    elif noise_type == 'gaussian':
+        source_image = noises.gaussian(
+            target_image, var=noise_param)
+    else:
+        raise ValueError("Unknown noise type: %s" % noise_type)
+
+    return source_image, target_image
+
+
+def get_phenotype(params):
+    source_image, target_image = generate_images(
+        params['noise_type'], params['noise_param'])
+    phenotype = FilterSequence(
+        genotype=IntegerChromosome(
+            length=params['chromosome_length'],
+            min_val=0,
+            max_val=len(FilterCall.all()) - 1),
+        source_image=source_image,
+        target_image=target_image)
+    return phenotype
 
 
 class _FilterSequence(Individual):

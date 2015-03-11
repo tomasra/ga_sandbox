@@ -2,6 +2,7 @@
 import sys
 import pickle
 import projects.denoising.experiments.experiment as exp
+from projects.denoising.experiments.results import _ResultSet
 from projects.denoising.imaging.utils import render_image
 
 
@@ -10,7 +11,7 @@ def filter_image(result_filepath):
     Generate noisified image according to parameters
     and then filter it with the best solution dumped in results file
     """
-    result_set = exp.read_results_file(result_filepath)
+    result_set = _ResultSet(result_filepath)
 
     try:
         source_image = pickle.loads(result_set.parameters.source_image_dump)

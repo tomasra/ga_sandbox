@@ -12,6 +12,7 @@ def all_runs(result_dir):
         'elite_size': 0,
         'selection': 'roulette',
         'tournament_size': 0,
+        'crossover': 'one_point',
         'crossover_rate': 0.8,
         'mutation_rate': 0.005,
         # Set in the loop
@@ -26,7 +27,7 @@ def all_runs(result_dir):
 
         'dump_images': False,
         'output_file': 'output.json',
-        'print_iterations': False,
+        'print_iterations': True,
     }
 
     # One run for each elitism value
@@ -39,7 +40,7 @@ def all_runs(result_dir):
             args['chromosome_length'] = chromosome_length
             args['population_size'] = population_size
             args['output_file'] = filepath
-            experiment.run(bunchify(args))
+            experiment.run(args)
 
 if __name__ == "__main__":
     rel_dir = sys.argv[1]

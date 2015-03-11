@@ -21,6 +21,51 @@ import projects.denoising.experiments.experiment as exp
 # directory = os.path.abspath(args.dir)
 
 
+def read_results_file(filepath):
+    """
+    Read single JSON-formatted result file
+    """
+    with open(filepath, 'r') as f:
+        json_results = json.load(f)
+    result_set = bunchify(json_results)
+    return result_set
+
+
+def read_results(directory):
+    """
+    Read JSON-formatted results from directory
+    """
+    # Absolute dir path
+    # abs_directory = os.path.abspath(directory)
+
+    # # Enumerate json files
+    # filepaths = [
+    #     os.path.join(abs_directory, filename)
+    #     for filename in os.listdir(abs_directory)
+    #     if os.path.isfile(os.path.join(abs_directory, filename))
+    #     and filename.endswith(RESULT_FORMAT)
+    # ]
+
+    # Read the actual results
+    result_sets = [
+        read_results_file(filepath)
+        for filepath in enumerate_results(directory)
+    ]
+    return result_sets
+
+
+def enumerate_results(directory):
+    """
+    Yields filepaths of result files
+    """
+    # Absolute dir path
+    abs_directory = os.path.abspath(directory)
+    for filename in os.listdir(abs_directory):
+        filepath = os.path.join(abs_directory, filename)
+        if os.path.isfile(filepath) and filename.endswith(RESULT_FORMAT):
+            yield filepath
+
+
 def f_exp(x, a, b, c, d):
     return -a * np.exp(-b * x + c) + d
 
@@ -39,7 +84,7 @@ def read_all_runs(directory, param_set_start=None, param_set_end=None):
         dirpath = os.path.join(directory, dirname)
         if os.path.isdir(dirpath) and dirname.startswith('run'):
             # Read result range from directory of single run
-            for result_filepath in exp.enumerate_results(dirpath):
+            for result_filepath in enumerate_results(dirpath):
                 param_set_id = int(
                     os.path.splitext(
                         os.path.basename(result_filepath)
@@ -50,14 +95,14 @@ def read_all_runs(directory, param_set_start=None, param_set_end=None):
                     if param_set_id not in results:
                         results[param_set_id] = []
                     results[param_set_id].append(
-                        exp.read_results_file(result_filepath))
+                        read_results_file(result_filepath))
     return results
 
 
 def read_one_run(directory):
     results = {}
     # Read result range from directory of single run
-    for result_filepath in exp.enumerate_results(directory):
+    for result_filepath in enumerate_results(directory):
         param_set_id = int(
             os.path.splitext(
                 os.path.basename(result_filepath)
@@ -68,7 +113,7 @@ def read_one_run(directory):
         #     if param_set_id not in results:
         #         results[param_set_id] = []
         # print param_set_id
-        results[param_set_id] = exp.read_results_file(result_filepath)
+        results[param_set_id] = read_results_file(result_filepath)
     return results
 
 
@@ -353,7 +398,7 @@ def fitness_with_fit(results):
     # Fit best fitness to exponential function
     popt, pcov = curve_fit(
         f_exp,
-        iterations, mean_best, p0=(1, 1, -1, 1), maxfev=2000)
+        iterations, mean_best, p0=(1, 1, 1, 1), maxfev=2000)
     print popt
     print pcov
     fit_best = [f_exp(i, *popt) for i in iterations]
@@ -373,13 +418,13 @@ def fitness_with_fit(results):
     plt.ylim([0, 1.2])
     plt.plot(
         mean_best,
-        label='Suvidurkintas geriausias fitnesas')
-    plt.plot(
-        mean_avg,
-        label='Suvidurkintas vidutinis fitnesas')
+        label=u'Didžiausio fitneso vidurkis')
+    # plt.plot(
+    #     mean_avg,
+    #     label='Suvidurkintas vidutinis fitnesas')
     plt.plot(
         fit_best,
-        label='Geriausio fitneso aproksimacija')
+        label='Aproksimacija', color='red')
     plt.legend(loc='lower right')
     plt.show()
 
