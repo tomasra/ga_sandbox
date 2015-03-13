@@ -11,6 +11,7 @@ from core.crossovers import get_crossover
 from core.selections import get_selection
 from core.parallelizer import Parallelizer
 from projects.denoising.solution import get_phenotype
+import projects.denoising.neural.solution as neural
 import projects.denoising.imaging.noises as noises
 from projects.denoising.experiments.parameters import parse_cli_args
 
@@ -37,7 +38,17 @@ def run(args):
         if parallelizer.master_process:
             # Create phenotype representing specific problem to solve
             # and distribute copies to workers
-            phenotype = get_phenotype(args)
+            
+            # FIXME!!!
+            # phenotype = get_phenotype(args)
+            if 'filter_type' in args:
+                if args['filter_type'] == 'mlp':
+                    phenotype = neural.get_phenotype(args)
+                else:
+                    phenotype = get_phenotype(args)
+            else:
+                phenotype = get_phenotype(args)
+
             parallelizer.broadcast(phenotype=phenotype)
             selection = get_selection(args)
             crossover = get_crossover(args)
@@ -99,17 +110,35 @@ def run(args):
             end = time.time()
             duration = end - start
 
-            # Write results to file
-            # But first - unset source and target images to prevent them
-            # from being serialized
-            solution.source_image = None
-            solution.target_image = None
+            if 'filter_type' in args and args['filter_type'] == 'mlp':
+                # Get filtered image
+                solution._calculate_fitness()
+                filtered_image = solution.filtered_image
 
-            output['results'] = {
-                'solution_dump': pickle.dumps(solution),
-                'run_time': duration,
-                'iterations': generation,
-            }
+                # Write results to file
+                # But first - unset source and target images to prevent them
+                # from being serialized
+                solution.source_image = None
+                solution.target_image = None
+
+                output['results'] = {
+                    # 'solution_dump': pickle.dumps(solution),
+                    'filtered_image': pickle.dumps(filtered_image),
+                    'run_time': duration,
+                    'iterations': generation,
+                }
+            else:
+                # Write results to file
+                # But first - unset source and target images to prevent them
+                # from being serialized
+                solution.source_image = None
+                solution.target_image = None
+
+                output['results'] = {
+                    'solution_dump': pickle.dumps(solution),
+                    'run_time': duration,
+                    'iterations': generation,
+                }
 
             with open(args['output_file'], 'w') as f:
                 json.dump(output, f)

@@ -17,7 +17,9 @@ def get_crossover(params):
     elif params['crossover'] == 'uniform':
         crossover = UniformCrossover(params['crossover_rate'])
     elif params['crossover'] == 'whole_arithmetic':
-        crossover = WholeArithmeticCrossover(params['crossover_rate'])
+        crossover = WholeArithmeticCrossover(
+            params['crossover_alpha'],
+            params['crossover_rate'])
     else:
         raise ValueError("Unknown crossover type: %s" % params['crossover'])
     return crossover
