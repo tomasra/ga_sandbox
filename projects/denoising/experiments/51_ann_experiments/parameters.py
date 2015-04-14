@@ -4,17 +4,18 @@ import argparse
 import json
 import itertools
 
-_SET_NAME = 'set1'
+_SET_NAME = 'set'
 _START_ID = 1
 
-MAX_ITERATIONS = 10000
+MAX_ITERATIONS = 1000
 ITERATIONS_BETWEEN_REPORTS = 10
 DESIRED_ERROR = 0.0
 LEARNING_RATE = 1.0
-ACTIVATION_FUNCTION = 'elliot'
+ACTIVATION_FUNCTION = 'sigmoid'
+TRAINING_ALGORITHM = 'quickprop'
 
 PATCH_SIZES = [3, 5, 7, 9, 11]
-HIDDEN_NEURONS = [2, 4, 6, 8, 10]
+HIDDEN_NEURONS = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 
 
 if __name__ == "__main__":
@@ -31,7 +32,8 @@ if __name__ == "__main__":
         params['desired_error'] = DESIRED_ERROR
         params['learning_rate'] = LEARNING_RATE
         params['activation_function'] = ACTIVATION_FUNCTION
-        
+        params['training_algorithm'] = TRAINING_ALGORITHM
+
         params['patch_size'] = patch_size
         params['hidden_neurons'] = hidden_neurons
 

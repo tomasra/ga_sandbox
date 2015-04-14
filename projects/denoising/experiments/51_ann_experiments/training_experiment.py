@@ -5,16 +5,31 @@ import tempfile
 import json
 import time
 from fann2 import libfann
-from projects.denoising.neural.filtering import get_training_data
+from projects.denoising.neural.filtering import get_training_data, filter_fann
 # from skimage import io, util
 import skimage.io
 import skimage.util
 from cStringIO import StringIO
 
+
+def filter_image(ann_path, noisy_image, result_path):
+    ann = libfann.neural_net()
+    ann.create_from_file(ann_path)
+    filtered_image = filter_fann(noisy_image, ann)
+    skimage.io.imsave(result_path, filtered_image)
+
+
 ACTIVATION_FUNCTIONS = {
     'sigmoid': libfann.SIGMOID,
     'gaussian': libfann.GAUSSIAN,
     'elliot': libfann.ELLIOT
+}
+
+TRAINING_ALGORITHMS = {
+    'incremental': libfann.TRAIN_INCREMENTAL,
+    'batch': libfann.TRAIN_BATCH,
+    'rprop': libfann.TRAIN_RPROP,
+    'quickprop': libfann.TRAIN_QUICKPROP
 }
 
 
@@ -98,28 +113,43 @@ class TrainingExperiment(object):
         self.clear_image = clear_image
         self.result_dir = result_dir
         self.params = params
-        # self.params = {
-        #     'id': 'ABCD-1234',
-        #     'patch_size': 3,
-        #     'activation_function': 'elliot',
-        #     'hidden_neurons': 2,
-        # }
 
     def run(self):
         """
         Train ANN with one noisy and one clear image
         """
         ann = libfann.neural_net()
-        topology = [
-            self.params['patch_size'] ** 2,
-            self.params['hidden_neurons'],
-            1
-        ]
+        # Second hidden layer?
+        if 'hidden_neurons2' in self.params:
+            hidden_neurons2 = self.params['hidden_neurons2']
+        else:
+            hidden_neurons2 = 0
+        
+        if hidden_neurons2 == 0:
+            topology = [
+                self.params['patch_size'] ** 2,
+                self.params['hidden_neurons'],
+                1
+            ]
+        else:
+            topology = [
+                self.params['patch_size'] ** 2,
+                self.params['hidden_neurons'],
+                hidden_neurons2,
+                1
+            ]
+
         ann.create_standard_array(topology)
-        ann.set_learning_rate(self.params['learning_rate'])
         # Set AF for whole hidden layer
         ann.set_activation_function_layer(
             ACTIVATION_FUNCTIONS[self.params['activation_function']], 1)
+        if hidden_neurons2 > 0:
+            ann.set_activation_function_layer(
+                ACTIVATION_FUNCTIONS[self.params['activation_function']], 2)
+
+        ann.set_learning_rate(self.params['learning_rate'])
+        ann.set_training_algorithm(
+            TRAINING_ALGORITHMS[self.params['training_algorithm']])
 
         # Train
         training_file = self._get_training_file()
