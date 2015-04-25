@@ -6,9 +6,74 @@ from projects.denoising.imaging.analysis import binarize
 import PIL
 from PIL import ImageFont, ImageDraw
 from projects.denoising.imaging.image import Image
-
+from skimage import io, util
+from scipy.ndimage import gaussian_filter
+import textwrap
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 HORIZONTAL_OFFSET = 4
+
+def show_image(image):
+    io.imshow(image)
+    io.show()
+    # plt.imshow(image, cmap=cm.gray, vmin=0.0, vmax=1.0)
+    # plt.show()
+
+# OCR text image generation
+DEFAULT_TEXT = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vel aliquet velit, id congue posuere.'
+# DEFAULT_DIMENSIONS = (200, 200)
+# DEFAULT_TEXT = 'Lorem ipsum\ndolor sit amet.'
+# DEFAULT_DIMENSIONS = (60, 200)
+# DEFAULT_DIMENSIONS = (200, 60)
+DEFAULT_DIMENSIONS = (200, 200)
+# DEFAULT_BG_COLOR = 255
+DEFAULT_CONTRAST = 1.0
+DEFAULT_FG_COLOR = 0
+FONT_PATH = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    # "fonts/FreeSans.ttf")
+    "fonts/Inconsolata.ttf")
+    # "fonts/open-sans/OpenSans-Regular.ttf")
+
+def get_test_image(
+        blur_sigma, noise_sigma,
+        contrast=DEFAULT_CONTRAST):
+    
+    # Initialize new image
+    # image = np.empty(DEFAULT_DIMENSIONS)
+    # image.fill(contrast)
+    # # image = image.astype(np.uint8)
+    # image = util.img_as_ubyte(image)
+
+    # image = PIL.Image.fromarray(image, mode='L')
+    # image = PIL.Image.new('L', DEFAULT_DIMENSIONS, color=bg_color)
+    image = PIL.Image.new('L', DEFAULT_DIMENSIONS, (contrast * 255))
+
+    # Draw text
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.truetype(FONT_PATH, 24)
+    text_lines = textwrap.wrap(DEFAULT_TEXT, width=16)
+
+    y_text = 3
+    x_text = 10
+    line_height = 24
+    for line in text_lines:
+        width, height = font.getsize(line)
+        # draw.text(((DEFAULT_DIMENSIONS[1] - width)/2, y_text), line,
+        draw.text((x_text, y_text), line,
+            font=font, fill=DEFAULT_FG_COLOR)
+        y_text += line_height
+
+    np_image = util.img_as_float(np.array(image))
+
+    # Add blur and gaussian noise
+    np_image = gaussian_filter(np_image, blur_sigma)
+    if noise_sigma > 0.0:
+        np_image = util.random_noise(np_image, mode='gaussian', var=(noise_sigma ** 2))
+
+    np_image = np_image.clip(min=0.0, max=1.0)
+    return np_image
 
 
 class CharDrawer(object):

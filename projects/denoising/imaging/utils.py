@@ -1,4 +1,6 @@
 # from skimage.data import imread
+import os
+from skimage import io, util
 import skimage.color as color
 import skimage.morphology as mph
 from PIL import Image, ImageOps
@@ -27,6 +29,26 @@ import matplotlib.cm as cm
 #         for i in xrange(3)
 #     ]
 #     return rgb
+
+
+def enumerate_images(image_dir, format='png'):
+    for filename in os.listdir(image_dir):
+        if os.path.splitext(filename)[1].endswith(format):
+            image_path = os.path.join(image_dir, filename)
+            image = util.img_as_float(io.imread(image_path))
+            image_name = os.path.splitext(filename)[0]
+            yield image_name, image
+
+
+def render(image):
+    """Default method for rendering float images
+    """
+    fig = plt.figure()
+    plt.imshow(image, cmap=cm.gray, vmin=0.0, vmax=1.0)
+    ax = plt.Axes(fig, [0., 0., 1., 1.])
+    ax.set_axis_off()
+    fig.add_axes(ax)
+    plt.show()
 
 
 def render_image(image, filename=None):
