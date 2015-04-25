@@ -113,7 +113,10 @@ def run(args):
             if 'filter_type' in args and args['filter_type'] == 'mlp':
                 # Get filtered image
                 solution._calculate_fitness()
-                filtered_image = solution.filtered_image
+                # filtered_image = solution.filtered_image
+
+                ann_filepath = os.path.splitext(args['output_file'])[0] + '.net'
+                solution.mlp.save(ann_filepath)
 
                 # Write results to file
                 # But first - unset source and target images to prevent them
@@ -123,7 +126,7 @@ def run(args):
 
                 output['results'] = {
                     # 'solution_dump': pickle.dumps(solution),
-                    'filtered_image': pickle.dumps(filtered_image),
+                    # 'filtered_image': pickle.dumps(filtered_image),
                     'run_time': duration,
                     'iterations': generation,
                 }

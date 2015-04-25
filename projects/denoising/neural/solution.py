@@ -1,35 +1,23 @@
+import math
 import numpy as np
 from fann2 import libfann
 from core.individual import Individual
 from core.chromosomes import RealChromosome
 from scipy.ndimage import generic_filter
 import sklearn.feature_extraction.image as skimg
-import projects.denoising.imaging.metrics as metrics
+# import projects.denoising.imaging.metrics as metrics
+from projects.denoising.imaging.char_drawer import get_test_image
+from projects.denoising.imaging import metrics
+from projects.denoising.neural.filtering import filter_fann
 
-from skimage import data, util
+from skimage import data, util, io
 
 # TEMPORARY!
 def get_phenotype(params):
-    # Small fragment of stock 'camera man' test image
-    source_image = None
-    # target_image = data.camera()[50:240, 170:350]
-    target_image = data.camera()[50:170, 170:280]
-    target_image = util.img_as_float(target_image)
-    if params['noise_type'] == 'gaussian':
-        source_image = util.random_noise(
-            target_image, mode='gaussian', var=params['noise_param'])
-    else:
-        raise ValueError("Only gaussian noise is supported")
-    
+    source_image = util.img_as_float(io.imread(params['input_image']))
     # Fixed for now.
-    # network_shape = [9, 10, 10, 1]
-    network_shape = [9, 20, 1]
-    # network_shape = [25, 10, 10, 10, 1]
-    # network_shape = [169, 511, 1]
-    # network_shape = [49, 151, 1]
-    # network_shape = [25, 75, 25]
-    # network_shape = [9, 30, 9]
-    return NeuralFilterMLP(source_image, target_image, network_shape)
+    network_shape = [25, 10, 10, 1]
+    return NeuralFilterMLP(source_image, network_shape)
 
 
 # Copied from:
@@ -93,15 +81,11 @@ class NeuralFilterMLP(object):
     """
     Multi-layer perceptron
     """
-    def __init__(self, source_image, target_image, network_shape):
-        # if len(network_shape) != 3:
-        #     raise ValueError("Only MLPs with one hidden layer are supported")
-        # if network_shape[::-1][0] != 1:
-        #     raise ValueError("MLP must have single output")
-
+    def __init__(self, source_image, network_shape):
         self.source_image = source_image
-        self.target_image = target_image
+        self.target_image = None
         self.network_shape = network_shape
+        self.initial_q = metrics.q_py(source_image)
 
     def __call__(self, *args, **kwargs):
         """
@@ -126,7 +110,9 @@ class NeuralFilterMLP(object):
                 self.length += (s[i] + 1) * s[i + 1]
 
         def __call__(self, *args, **kwargs):
-            return RealChromosome(self.length, -1.0, 1.0)
+            min_val = -1.0
+            max_val = 1.0
+            return RealChromosome(self.length, min_val, max_val)
 
     """
     GA solution representing MLP-based image filter
@@ -134,7 +120,12 @@ class NeuralFilterMLP(object):
     class _Individual(Individual):
         def __init__(self, phenotype, *args, **kwargs):
             self.phenotype = phenotype
-            self.mlp = None
+            # self.mlp = None
+            
+            # Initialize network
+            self.mlp = libfann.neural_net()
+            self.mlp.create_standard_array(self.phenotype.network_shape)
+
             self.filtered_image = None
             super(NeuralFilterMLP._Individual, self).__init__(*args, **kwargs)
 
@@ -143,8 +134,8 @@ class NeuralFilterMLP(object):
             Reconstruct neural network from real-coded chromosome
             """
             # Initialize network
-            self.mlp = libfann.neural_net()
-            self.mlp.create_standard_array(self.phenotype.network_shape)
+            # self.mlp = libfann.neural_net()
+            # self.mlp.create_standard_array(self.phenotype.network_shape)
 
             # Set weights
             new_connections = [
@@ -167,23 +158,22 @@ class NeuralFilterMLP(object):
             Run MLP filter on source image and
             calculate MSE between filtered and target
             """
-            def _filter_func(window):
-                return self.mlp.run(window.flatten())[0]
+            # def _filter_func(window):
+            #     return self.mlp.run(window.flatten())[0]
 
-            window_size = int(np.sqrt(self.mlp.get_num_input()))
-            footprint = np.ones((window_size, window_size))
-            self.filtered_image = generic_filter(
-                self.phenotype.source_image, _filter_func,
-                footprint=footprint)
+            # window_size = int(np.sqrt(self.mlp.get_num_input()))
+            # footprint = np.ones((window_size, window_size))
+            # self.filtered_image = generic_filter(
+            #     self.phenotype.source_image, _filter_func,
+            #     footprint=footprint)
+            self.filtered_image = filter_fann(self.phenotype.source_image, self.mlp)
+
             # patch_size = (window_size, window_size)
             # self.filtered_image = _filter(self.phenotype.source_image, self.mlp, patch_size)
 
-            max_diff = 255
-            for dim in self.filtered_image.shape:
-                max_diff *= dim
-
-            # return 1.0 / (1.0 + mse(self.target_image, self.filtered_image))
-            # return 1.0 / (1.0 + metrics.absolute_error(
-            #     self.target_image, self.filtered_image))
-            return 1.0 - float(metrics.absolute_error(
-                self.phenotype.target_image, self.filtered_image)) / max_diff
+            filtered_q = metrics.q_py(self.filtered_image)
+            delta_q = filtered_q - self.phenotype.initial_q
+            # Sigmoid
+            fitness = 1.0 / (1.0 + math.exp(-1.0 * delta_q / self.phenotype.initial_q))
+            # print self.phenotype.initial_q, filtered_q, delta_q, fitness
+            return fitness
