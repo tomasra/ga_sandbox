@@ -134,10 +134,7 @@ class NeuralFilterMLP(object):
             ]
             exp_p = lambda x, a, b, c, d: -a * np.exp(-b * x + c) + d
             exp = lambda x: exp_p(x, *exp_coefs)
-            a = exp(self.ideal_q_guess)
-
-            parabola_xa = lambda x, a: a * (x - self.ideal_q_guess)**2 + 1.0
-            self.parabola_x = lambda x: parabola_xa(x, a)
+            self.parabola_coef = exp(self.ideal_q_guess)
 
 
     def __call__(self, *args, **kwargs):
@@ -233,7 +230,8 @@ class NeuralFilterMLP(object):
                 self.filtered_image = filter_fann(self.phenotype.source_image, self.mlp)
                 filtered_q = metrics.q_py(self.filtered_image)
                 # print self.phenotype.ideal_q_guess, filtered_q
-                
+            
+                parabola_x = lambda x: self.phenotype.parabola_coef * (x - self.ideal_q_guess)**2 + 1.0
                 fitness = self.phenotype.parabola_x(filtered_q)
 
                 # delta_q = filtered_q - self.phenotype.initial_q
