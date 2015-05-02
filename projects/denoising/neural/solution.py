@@ -231,8 +231,8 @@ class NeuralFilterMLP(object):
                 filtered_q = metrics.q_py(self.filtered_image)
                 # print self.phenotype.ideal_q_guess, filtered_q
             
-                parabola_x = lambda x: self.phenotype.parabola_coef * (x - self.ideal_q_guess)**2 + 1.0
-                fitness = self.phenotype.parabola_x(filtered_q)
+                parabola_x = lambda x: self.phenotype.parabola_coef * (x - self.phenotype.ideal_q_guess)**2 + 1.0
+                fitness = parabola_x(filtered_q)
 
                 # delta_q = filtered_q - self.phenotype.initial_q
                 # Sigmoid
