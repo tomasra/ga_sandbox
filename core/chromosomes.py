@@ -293,3 +293,38 @@ class RealChromosome(Chromosome):
 
     def _concat_genes(self, other):
         return np.concatenate((self[:], other[:]))
+
+
+class RealStatChromosome(Chromosome):
+    """
+    Real coded chromosome with statistical initialization
+    """
+    def __init__(self, length, means, variances, content=None):
+        self.length = length
+        self.means = means
+        self.variances = variances
+        if content is None:
+            # Draw random numbers from different distribution
+            # for each index
+            content = [
+                np.random.normal(
+                    self.means[idx],
+                    np.sqrt(self.variances[idx])
+                )
+                for idx in xrange(self.length)
+            ]
+        super(RealStatChromosome, self).__init__(content)
+
+
+    def _mutate_gene(self, gene, index):
+        """
+        Draw a random number from normal distribution
+        with specified mean and variance
+        """
+        return np.random.normal(
+            self.means[index],
+            np.sqrt(self.variances[index])      # std deviation
+        )
+
+    def _concat_genes(self, other):
+        return np.concatenate((self[:], other[:]))

@@ -1,8 +1,10 @@
+import os
 import math
+import json
 import numpy as np
 from fann2 import libfann
 from core.individual import Individual
-from core.chromosomes import RealChromosome
+from core.chromosomes import RealChromosome, RealStatChromosome
 from scipy.ndimage import generic_filter
 import sklearn.feature_extraction.image as skimg
 # import projects.denoising.imaging.metrics as metrics
@@ -17,7 +19,20 @@ def get_phenotype(params):
     source_image = util.img_as_float(io.imread(params['input_image']))
     # Fixed for now.
     network_shape = [25, 10, 10, 1]
-    return NeuralFilterMLP(source_image, network_shape)
+    init_method = params['init_method']     # 'uniform' or 'normal'
+    if init_method == 'normal':
+        path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            'gaussian-set-19-stats.json'   
+        )
+        with open(path, 'r') as fp:
+            stats = json.load(fp)
+    else:
+        stats = None
+
+    fitness_func = params['fitness_func']
+    # fitness_func = 'ann'
+    return NeuralFilterMLP(source_image, network_shape, init_method, stats, fitness_func)
 
 
 # Copied from:
@@ -81,11 +96,49 @@ class NeuralFilterMLP(object):
     """
     Multi-layer perceptron
     """
-    def __init__(self, source_image, network_shape):
+    def __init__(self, source_image, network_shape, init_method, stats, fitness_func):
         self.source_image = source_image
         self.target_image = None
         self.network_shape = network_shape
+        # Statistical chromosome initialization
+        self.init_method = init_method
+        self.stats = stats
+        # Other
+        self.fitness_func = fitness_func
         self.initial_q = metrics.q_py(source_image)
+
+        self.trained_anns = []
+        if fitness_func == 'ann':
+            # Instantiate all neural nets
+            ann_dir = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                'trained_anns'
+            )
+            for filename in os.listdir(ann_dir):
+                if filename.endswith('.net'):
+                    ann_path = os.path.join(ann_dir, filename)
+                    ann = libfann.neural_net()
+                    ann.create_from_file(ann_path)
+                    self.trained_anns.append(ann)
+        else:
+            slope = 0.65722219398100967
+            intercept = 0.099529774137723237
+            self.ideal_q_guess = slope * self.initial_q + intercept
+            # print "Initial Q guess: " + str(self.ideal_q_guess)
+
+            exp_coefs = [
+                6.58953834,
+                29.54967305,
+                6.00895362,
+                -40.3269125
+            ]
+            exp_p = lambda x, a, b, c, d: -a * np.exp(-b * x + c) + d
+            exp = lambda x: exp_p(x, *exp_coefs)
+            a = exp(self.ideal_q_guess)
+
+            parabola_xa = lambda x, a: a * (x - self.ideal_q_guess)**2 + 1.0
+            self.parabola_x = lambda x: parabola_xa(x, a)
+
 
     def __call__(self, *args, **kwargs):
         """
@@ -101,6 +154,7 @@ class NeuralFilterMLP(object):
     class _Genotype(object):
         def __init__(self, phenotype):
             # Chromosome length depends on network shape
+            self.phenotype = phenotype
             s = phenotype.network_shape
             # +1 because of bias neurons in input and hidden layers
             # self.length = ((s[0] + 1) * s[1]) + s[1] + 1
@@ -110,9 +164,16 @@ class NeuralFilterMLP(object):
                 self.length += (s[i] + 1) * s[i + 1]
 
         def __call__(self, *args, **kwargs):
-            min_val = -1.0
-            max_val = 1.0
-            return RealChromosome(self.length, min_val, max_val)
+            if self.phenotype.init_method == 'uniform':
+                min_val = -1.0
+                max_val = 1.0
+                return RealChromosome(
+                    self.length, min_val, max_val)
+            elif self.phenotype.init_method == 'normal':
+                return RealStatChromosome(
+                    self.length,
+                    self.phenotype.stats['mean'],
+                    self.phenotype.stats['var'])
 
     """
     GA solution representing MLP-based image filter
@@ -158,22 +219,26 @@ class NeuralFilterMLP(object):
             Run MLP filter on source image and
             calculate MSE between filtered and target
             """
-            # def _filter_func(window):
-            #     return self.mlp.run(window.flatten())[0]
 
-            # window_size = int(np.sqrt(self.mlp.get_num_input()))
-            # footprint = np.ones((window_size, window_size))
-            # self.filtered_image = generic_filter(
-            #     self.phenotype.source_image, _filter_func,
-            #     footprint=footprint)
-            self.filtered_image = filter_fann(self.phenotype.source_image, self.mlp)
+            if self.phenotype.fitness_func == 'ann':
+                # Average ann outputs
+                self.filtered_image = filter_fann(self.phenotype.source_image, self.mlp)
+                filtered_q = metrics.q_py(self.filtered_image)
+                # print filtered_q
+                return np.mean([
+                    ann.run([self.phenotype.initial_q, filtered_q])
+                    for ann in self.phenotype.trained_anns
+                ])
+            else:
+                self.filtered_image = filter_fann(self.phenotype.source_image, self.mlp)
+                filtered_q = metrics.q_py(self.filtered_image)
+                # print self.phenotype.ideal_q_guess, filtered_q
+                
+                fitness = self.phenotype.parabola_x(filtered_q)
 
-            # patch_size = (window_size, window_size)
-            # self.filtered_image = _filter(self.phenotype.source_image, self.mlp, patch_size)
-
-            filtered_q = metrics.q_py(self.filtered_image)
-            delta_q = filtered_q - self.phenotype.initial_q
-            # Sigmoid
-            fitness = 1.0 / (1.0 + math.exp(-1.0 * delta_q / self.phenotype.initial_q))
-            # print self.phenotype.initial_q, filtered_q, delta_q, fitness
-            return fitness
+                # delta_q = filtered_q - self.phenotype.initial_q
+                # Sigmoid
+                # fitness = 1.0 / (1.0 + math.exp(-1.0 * delta_q / self.phenotype.initial_q))
+                # print delta_q
+                # print "Initial Q: " + str(self.phenotype.initial_q) + ", filtered Q: " + str(filtered_q)
+                return fitness
