@@ -135,7 +135,10 @@ class NeuralFilterMLP(object):
             exp_p = lambda x, a, b, c, d: -a * np.exp(-b * x + c) + d
             exp = lambda x: exp_p(x, *exp_coefs)
             self.parabola_coef = exp(self.ideal_q_guess)
-
+            s = "INITIAL Q: " + str(self.initial_q)
+            s += ", IDEAL Q GUESS: " + str(self.ideal_q_guess)
+            s += ", PARABOLA COEF: " + str(self.parabola_coef)
+            print s
 
     def __call__(self, *args, **kwargs):
         """
@@ -178,8 +181,8 @@ class NeuralFilterMLP(object):
     class _Individual(Individual):
         def __init__(self, phenotype, *args, **kwargs):
             self.phenotype = phenotype
-            # self.mlp = None
-            
+            self.filtered_q = None
+
             # Initialize network
             self.mlp = libfann.neural_net()
             self.mlp.create_standard_array(self.phenotype.network_shape)
@@ -196,6 +199,31 @@ class NeuralFilterMLP(object):
             # self.mlp.create_standard_array(self.phenotype.network_shape)
 
             # Set weights
+            
+            # self._chromosome = chromosome
+            pass
+            # new_connections = [
+            #     (
+            #         # Connection - from
+            #         pair[0][0],
+            #         # Connection - to
+            #         pair[0][1],
+            #         # New weight
+            #         pair[1]
+            #     )
+            #     for pair in zip(
+            #         self.mlp.get_connection_array(),
+            #         chromosome)
+            # ]
+            # self.mlp.set_weight_array(new_connections)
+
+            # print "EXISTING: " + str(self.fitness) + ", CALCULATED: " + str(self._calculate_fitness())
+
+        def _calculate_fitness(self):
+            """
+            Run MLP filter on source image and
+            calculate MSE between filtered and target
+            """
             new_connections = [
                 (
                     # Connection - from
@@ -207,15 +235,9 @@ class NeuralFilterMLP(object):
                 )
                 for pair in zip(
                     self.mlp.get_connection_array(),
-                    chromosome)
+                    self.chromosome)
             ]
             self.mlp.set_weight_array(new_connections)
-
-        def _calculate_fitness(self):
-            """
-            Run MLP filter on source image and
-            calculate MSE between filtered and target
-            """
 
             if self.phenotype.fitness_func == 'ann':
                 # Average ann outputs
@@ -228,12 +250,14 @@ class NeuralFilterMLP(object):
                 ])
             else:
                 self.filtered_image = filter_fann(self.phenotype.source_image, self.mlp)
-                filtered_q = metrics.q_py(self.filtered_image)
+                self.filtered_q = metrics.q_py(self.filtered_image)
                 # print self.phenotype.ideal_q_guess, filtered_q
             
                 parabola_x = lambda x: self.phenotype.parabola_coef * (x - self.phenotype.ideal_q_guess)**2 + 1.0
-                fitness = parabola_x(filtered_q)
+                fitness = parabola_x(self.filtered_q)
 
+                # print "Fitness: " + str(fitness) + ", Q: " + str(self.filtered_q)
+               
                 # delta_q = filtered_q - self.phenotype.initial_q
                 # Sigmoid
                 # fitness = 1.0 / (1.0 + math.exp(-1.0 * delta_q / self.phenotype.initial_q))
