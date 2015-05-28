@@ -3,9 +3,7 @@ import os
 import sys
 import argparse
 from bunch import bunchify
-from projects.denoising.imaging.metrics import q_py, ocr_accuracy
 from projects.denoising.experiments import experiment
-from skimage import io, util
 
 
 def filter_image(ann_path, noisy_image_path, output_path):
@@ -28,7 +26,7 @@ if __name__ == "__main__":
     args = vars(parser.parse_args())
     
     INPUT_IMAGE = '/scratch/lustre/home/tora6799/data/synthetic_tests/noisy/1/' + args['image'] + '.png'
-    OUTPUT_FILE = '/scratch/lustre/home/tora6799/data/synthetic_tests/results/ga3/' + args['run'] + '/' + args['image'] + '.json'
+    OUTPUT_FILE = '/scratch/lustre/home/tora6799/data/synthetic_tests/results/ga2/' + args['run'] + '/' + args['image'] + '.json'
 
     args = {
         # Set in the loop
@@ -46,7 +44,7 @@ if __name__ == "__main__":
         'fitness_func': 'stat',
 
         # Run indefinitely
-        'fitness_threshold': 999.0,
+        'fitness_threshold': 1.0,
         'max_iterations': 500,
         'rng_freeze': False,
 
@@ -65,4 +63,3 @@ if __name__ == "__main__":
     #     '/home/tomas/Masters/4_semester/synthetic_tests/noisy/1/noisy-20-003-04.png',
     #     'filtered.png'
     # )
-
