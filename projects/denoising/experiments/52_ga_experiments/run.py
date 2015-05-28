@@ -3,7 +3,9 @@ import os
 import sys
 import argparse
 from bunch import bunchify
+from projects.denoising.imaging.metrics import q_py, ocr_accuracy
 from projects.denoising.experiments import experiment
+from skimage import io, util
 
 
 def filter_image(ann_path, noisy_image_path, output_path):
@@ -26,12 +28,12 @@ if __name__ == "__main__":
     args = vars(parser.parse_args())
     
     INPUT_IMAGE = '/home/tomas/Masters/4_semester/synthetic_tests/noisy/1/' + args['image'] + '.png'
-    OUTPUT_FILE = '/home/tomas/Masters/4_semester/synthetic_tests/results/ga/' + args['run'] + '/' + args['image'] + '.json'
+    OUTPUT_FILE = '/home/tomas/Masters/4_semester/synthetic_tests/results/_test/' + args['run'] + '/' + args['image'] + '.json'
 
     args = {
         # Set in the loop
-        'population_size': 200,
-        'elite_size': 10,
+        'population_size': 10,
+        'elite_size': 2,
         'selection': 'tournament',
         'tournament_size': 2,
         # 'crossover': 'whole_arithmetic',
@@ -45,7 +47,7 @@ if __name__ == "__main__":
 
         # Run indefinitely
         'fitness_threshold': 1.0,
-        'max_iterations': 10,
+        'max_iterations': 5,
         'rng_freeze': False,
 
         'dump_images': False,
@@ -57,9 +59,9 @@ if __name__ == "__main__":
         'print_iterations': True,
         'filter_type': 'mlp'
     }
-    # experiment.run(args)
-    # filter_image(
-    #     'noisy-20-003-04.net',
-    #     '/home/tomas/Masters/4_semester/synthetic_tests/noisy/1/noisy-20-003-04.png',
-    #     'filtered.png'
-    # )
+    experiment.run(args)
+    filter_image(
+        OUTPUT_FILE.replace('.json', '.net'),
+        INPUT_IMAGE,
+        OUTPUT_FILE.replace('.json', '.png')
+    )
